@@ -2,11 +2,11 @@
 // You must replace these placeholder strings with your actual Appwrite Project IDs.
 
 export const APPWRITE_CONFIG = {
-  ENDPOINT: 'ttps://sgp.cloud.appwrite.io/v1', // Or your self-hosted endpoint
-  PROJECT_ID: '69219b32003852cf85b2',
-  DATABASE_ID: '',
+  ENDPOINT: 'https://sgp.cloud.appwrite.io/v1', // Or your self-hosted endpoint
+  PROJECT_ID: '692460e80033f24ebcfd',
+  DATABASE_ID: 'DatabaseId',
   USERS_COLLECTION_ID: 'users',
-  ORDERS_COLLECTION_ID: 'orders',
+  ORDERS_COLLECTION_ID: 'tasks',
   BUCKET_ID: '6921a9b6000fffc90abd',
 };
 

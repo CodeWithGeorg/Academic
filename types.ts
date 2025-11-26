@@ -16,6 +16,14 @@ export interface Order extends Models.Document {
   deadline: string;
   fileId?: string;
   status: OrderStatus;
+
+  $id: string
+  $collectionId: string;
+  $databaseId: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $permissions: string[];
+  $sequence?: number;
 }
 
 export interface OrderStats {

@@ -158,6 +158,7 @@ export const createOrder = async (
   }
 };
 
+
 export const getClientOrders = async (userId: string): Promise<Order[]> => {
   try {
     const response = await databases.listDocuments(
@@ -168,7 +169,8 @@ export const getClientOrders = async (userId: string): Promise<Order[]> => {
     return response.documents as unknown as Order[];
   } catch (error) {
     console.warn("Fetch client orders failed (using demo data).", error);
-    return MOCK_ORDERS;
+    // Filter mock orders to only show the requested user's orders
+    return MOCK_ORDERS.filter(order => order.userId === userId);
   }
 };
 

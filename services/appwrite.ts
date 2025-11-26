@@ -1,6 +1,6 @@
 import { Client, Account, Databases, Storage, ID, Query, Models } from 'appwrite';
 import { APPWRITE_CONFIG, OrderStatus, UserRole } from '../constants';
-import { Order, UserProfile } from '../types';
+import { Order, UserProfile, Submission } from '../types';
 
 const client = new Client()
   .setEndpoint(APPWRITE_CONFIG.ENDPOINT)
@@ -13,19 +13,24 @@ export const storage = new Storage(client);
 // Helper to create unique IDs
 export const uniqueId = () => ID.unique();
 
+// Helper for Realtime Subscriptions
+export const subscribeToCollection = (collectionId: string, callback: (payload: any) => void) => {
+  return client.subscribe(`databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${collectionId}.documents`, callback);
+};
+
 // --- Mock Data for Demo Mode ---
 const MOCK_ORDERS: Order[] = [
   {
     $id: 'mock-1',
     $collectionId: 'orders',
     $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    $createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
     $updatedAt: new Date().toISOString(),
     $permissions: [],
     $sequence: 0,
-    userId: 'user-1',
-    title: 'Research Paper on Quantum Computing',
-    description: 'Need a 10-page paper on the current state of Quantum Computing with focus on error correction.',
+    userId: 'admin-1',
+    title: 'Assignment 1: Quantum Physics Intro',
+    description: 'Read the attached PDF and answer the questions on page 5 regarding error correction.',
     deadline: new Date(Date.now() + 86400000 * 5).toISOString(),
     status: OrderStatus.PENDING,
     fileId: 'mock-file',
@@ -34,58 +39,46 @@ const MOCK_ORDERS: Order[] = [
     $id: 'mock-2',
     $collectionId: 'orders',
     $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    $createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     $updatedAt: new Date().toISOString(),
     $permissions: [],
     $sequence: 0,
-    userId: 'user-2',
-    title: 'Statistical Analysis of Market Trends',
-    description: 'Analyze the attached CSV data and provide a summary report.',
-    deadline: new Date(Date.now() - 86400000 * 1).toISOString(),
-    status: OrderStatus.COMPLETED,
+    userId: 'admin-1',
+    title: 'Project: Market Trends Analysis',
+    description: 'Use the provided dataset to analyze Q3 market trends. Submit your report as a PDF.',
+    deadline: new Date(Date.now() + 86400000 * 7).toISOString(),
+    status: OrderStatus.IN_PROGRESS,
   },
   {
     $id: 'mock-3',
     $collectionId: 'orders',
     $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    $createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
     $updatedAt: new Date().toISOString(),
     $permissions: [],
     $sequence: 0,
-    userId: 'user-1',
-    title: 'Thesis Proofreading',
-    description: 'Please check for grammar and flow in Chapter 4.',
-    deadline: new Date(Date.now() + 86400000 * 10).toISOString(),
-    status: OrderStatus.IN_PROGRESS,
-  },
-  {
-    $id: 'mock-4',
-    $collectionId: 'orders',
-    $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
-    $updatedAt: new Date().toISOString(),
-    $permissions: [],
-    $sequence: 0,
-    userId: 'user-3',
-    title: 'History Essay - WW2',
-    description: '5 pages on the economic impact of WW2.',
-    deadline: new Date(Date.now() + 86400000 * 3).toISOString(),
-    status: OrderStatus.APPROVED,
-  },
-  {
-    $id: 'mock-5',
-    $collectionId: 'orders',
-    $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    $updatedAt: new Date().toISOString(),
-    $permissions: [],
-    $sequence: 0,
-    userId: 'user-2',
-    title: 'React App Development',
-    description: 'Build a simple Todo app with Redux.',
-    deadline: new Date(Date.now() + 86400000 * 2).toISOString(),
-    status: OrderStatus.REVISION,
+    userId: 'admin-1',
+    title: 'Essay: The Great Depression',
+    description: 'Write a 1500 word essay on the economic impact of the Great Depression.',
+    deadline: new Date(Date.now() - 86400000 * 1).toISOString(),
+    status: OrderStatus.COMPLETED,
   }
+];
+
+const MOCK_SUBMISSIONS: Submission[] = [
+    {
+        $id: 'sub-1',
+        $collectionId: 'submissions',
+        $databaseId: 'db',
+        $createdAt: new Date().toISOString(),
+        $updatedAt: new Date().toISOString(),
+        assignmentId: 'mock-3',
+        studentId: 'user-1',
+        fileId: 'mock-file-sub',
+        submittedAt: new Date().toISOString(),
+        status: 'graded',
+        grade: 'A-'
+    }
 ];
 
 // --- User Services ---
@@ -123,7 +116,7 @@ export const getUserRole = async (userId: string): Promise<UserRole> => {
   }
 };
 
-// --- Order Services ---
+// --- Assignment/Order Services ---
 
 export const createOrder = async (
   userId: string,
@@ -143,9 +136,8 @@ export const createOrder = async (
     );
   } catch (error) {
     console.warn("Create order failed (demo mode), returning mock.");
-    // Return a fake document to satisfy the UI
     return {
-      $id: 'temp-mock-id',
+      $id: 'temp-mock-id-' + Date.now(),
       $collectionId: 'orders',
       $databaseId: 'db',
       $createdAt: new Date().toISOString(),
@@ -158,19 +150,19 @@ export const createOrder = async (
   }
 };
 
-
+// Now used to fetch ALL Assignments for the students
 export const getClientOrders = async (userId: string): Promise<Order[]> => {
   try {
     const response = await databases.listDocuments(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
-      [Query.equal('userId', userId), Query.orderDesc('$createdAt')]
+      [Query.orderDesc('$createdAt')]
     );
     return response.documents as unknown as Order[];
   } catch (error) {
     console.warn("Fetch client orders failed (using demo data).", error);
-    // Filter mock orders to only show the requested user's orders
-    return MOCK_ORDERS.filter(order => order.userId === userId);
+    // Return ALL mock orders regardless of user, as these are assignments
+    return MOCK_ORDERS;
   }
 };
 
@@ -204,6 +196,46 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus) =>
     return null;
   }
 };
+
+// --- Submission Services ---
+
+export const submitAssignment = async (assignmentId: string, studentId: string, fileId: string, notes?: string) => {
+    try {
+        return await databases.createDocument(
+            APPWRITE_CONFIG.DATABASE_ID,
+            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+            ID.unique(),
+            {
+                assignmentId,
+                studentId,
+                fileId,
+                notes,
+                submittedAt: new Date().toISOString(),
+                status: 'submitted'
+            }
+        );
+    } catch (error) {
+        console.warn("Submission failed (demo mode).");
+        return { $id: 'mock-submission-id' };
+    }
+}
+
+export const getUserSubmissions = async (userId: string): Promise<Submission[]> => {
+    try {
+        const response = await databases.listDocuments(
+            APPWRITE_CONFIG.DATABASE_ID,
+            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+            [
+                Query.equal('studentId', userId),
+                Query.orderDesc('submittedAt')
+            ]
+        );
+        return response.documents as unknown as Submission[];
+    } catch (error) {
+        console.warn("Fetch submissions failed (using demo data).");
+        return MOCK_SUBMISSIONS;
+    }
+}
 
 // --- File Services ---
 

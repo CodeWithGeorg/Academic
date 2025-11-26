@@ -72,7 +72,7 @@ const MOCK_SUBMISSIONS: Submission[] = [
         $databaseId: 'db',
         $createdAt: new Date().toISOString(),
         $updatedAt: new Date().toISOString(),
-        assignmentId: 'mock-3',
+        $assignmentId: 'mock-3',
         studentId: 'user-1',
         fileId: 'mock-file-sub',
         submittedAt: new Date().toISOString(),

@@ -7,6 +7,7 @@ export const APPWRITE_CONFIG = {
   DATABASE_ID: 'DatabaseId',
   USERS_COLLECTION_ID: 'users',
   ORDERS_COLLECTION_ID: 'orders',
+  SUBMISSIONS_COLLECTION_ID: 'tasks',
   BUCKET_ID: '6921a9b6000fffc90abd',
 };
 

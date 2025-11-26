@@ -10,20 +10,36 @@ export interface UserProfile {
 }
 
 export interface Order extends Models.Document {
-  userId: string;
+  userId: string; // The Admin who created the assignment
   title: string;
   description: string;
   deadline: string;
   fileId?: string;
   status: OrderStatus;
-
-  $id: string
+  // Explicitly defining Appwrite document fields to ensure they exist in the type
+  $id: string;
   $collectionId: string;
   $databaseId: string;
   $createdAt: string;
   $updatedAt: string;
   $permissions: string[];
   $sequence?: number;
+}
+
+export interface Submission extends Models.Document {
+  assignmentId: string;
+  studentId: string;
+  fileId: string;
+  notes?: string;
+  submittedAt: string;
+  status: 'submitted' | 'approved' | 'rejected' | 'graded';
+  grade?: string;
+  // Explicit fields
+  $id: string;
+  $collectionId: string;
+  $databaseId: string;
+  $createdAt: string;
+  $updatedAt: string;
 }
 
 export interface OrderStats {

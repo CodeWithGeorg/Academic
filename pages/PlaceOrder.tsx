@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createOrder, uploadFile } from '../services/appwrite';
+import { UserRole } from '../constants';
 import Input from '../components/Input';
 import Button from '../components/Button';
 
 const PlaceOrder: React.FC = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   
   const [title, setTitle] = useState('');
@@ -15,6 +16,11 @@ const PlaceOrder: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Double check protection (though PrivateRoute handles it)
+  if (role !== UserRole.ADMIN) {
+      return <div className="p-8 text-center text-red-500">Access Denied. Only Admins can create assignments.</div>;
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -38,7 +44,7 @@ const PlaceOrder: React.FC = () => {
         fileId = uploadedFile.$id;
       }
 
-      // 2. Create Order
+      // 2. Create Order (Assignment)
       await createOrder(user.$id, {
         title,
         description,
@@ -46,10 +52,10 @@ const PlaceOrder: React.FC = () => {
         fileId,
       });
 
-      navigate('/dashboard');
+      navigate('/admin');
     } catch (err: any) {
       console.error(err);
-      setError('Failed to place order. Please try again.');
+      setError('Failed to create assignment. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -59,7 +65,8 @@ const PlaceOrder: React.FC = () => {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="bg-primary px-6 py-4">
-            <h1 className="text-xl font-bold text-white">Place New Order</h1>
+            <h1 className="text-xl font-bold text-white">Create New Assignment</h1>
+            <p className="text-indigo-100 text-sm">Post a new task for all students.</p>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -70,28 +77,28 @@ const PlaceOrder: React.FC = () => {
           )}
 
           <Input
-            label="Order Title"
+            label="Assignment Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            placeholder="e.g., Research Paper on AI"
+            placeholder="e.g., Physics Lab Report #3"
           />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description / Instructions
+              Instructions / Description
             </label>
             <textarea
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[150px]"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
-              placeholder="Provide detailed instructions..."
+              placeholder="Provide detailed instructions for the students..."
             />
           </div>
 
           <Input
-            label="Deadline"
+            label="Due Date"
             type="date"
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
@@ -100,7 +107,7 @@ const PlaceOrder: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Attachment (Optional)
+              Reference Material (PDF/DOC)
             </label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:bg-gray-50 transition-colors">
               <div className="space-y-1 text-center">
@@ -136,11 +143,11 @@ const PlaceOrder: React.FC = () => {
           </div>
 
           <div className="pt-4 flex justify-end space-x-3">
-             <Button type="button" variant="secondary" onClick={() => navigate('/dashboard')}>
+             <Button type="button" variant="secondary" onClick={() => navigate('/admin')}>
                 Cancel
              </Button>
              <Button type="submit" isLoading={loading}>
-                Submit Order
+                Create Assignment
              </Button>
           </div>
         </form>

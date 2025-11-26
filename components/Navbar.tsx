@@ -41,13 +41,14 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 {role === UserRole.CLIENT && (
-                  <>
-                    <Link to="/dashboard" className={isActive('/dashboard')}>My Orders</Link>
-                    <Link to="/place-order" className={isActive('/place-order')}>New Order</Link>
-                  </>
+                  <Link to="/dashboard" className={isActive('/dashboard')}>Assignments</Link>
                 )}
+                
                 {role === UserRole.ADMIN && (
-                   <Link to="/admin" className={isActive('/admin')}>Admin Dashboard</Link>
+                   <>
+                    <Link to="/admin" className={isActive('/admin')}>Dashboard</Link>
+                    <Link to="/place-order" className={isActive('/place-order')}>Create Assignment</Link>
+                   </>
                 )}
                 <div className="flex items-center gap-4 border-l pl-4 ml-2">
                     <span className="text-sm text-gray-500 hidden sm:block">Hello, {user.name}</span>

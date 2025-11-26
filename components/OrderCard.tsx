@@ -1,8 +1,9 @@
-import React from 'react';
-import { Order, UserProfile } from '../types';
+import React, { useState } from 'react';
+import { Order } from '../types';
 import { OrderStatus, UserRole } from '../constants';
-import { getFileDownload } from '../services/appwrite';
+import { getFileDownload, uploadFile, submitAssignment } from '../services/appwrite';
 import Button from './Button';
+import { useAuth } from '../context/AuthContext';
 
 interface OrderCardProps {
   order: Order;
@@ -19,46 +20,74 @@ const statusColors: Record<OrderStatus, string> = {
 };
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange }) => {
+  const { user } = useAuth();
   const dateStr = new Date(order.$createdAt).toLocaleDateString();
   const deadlineStr = new Date(order.deadline).toLocaleDateString();
+  
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmitWork = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!user || !submissionFile) return;
+    
+    setSubmitting(true);
+    try {
+        const file = await uploadFile(submissionFile);
+        await submitAssignment(order.$id, user.$id, file.$id);
+        setSubmitted(true);
+        setSubmissionFile(null);
+    } catch (err) {
+        console.error("Submission error", err);
+        alert("Failed to submit work");
+    } finally {
+        setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow flex flex-col h-full">
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900">{order.title}</h3>
-          <p className="text-sm text-gray-500">Ordered on {dateStr}</p>
+        <div className="pr-4">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{order.title}</h3>
+          <p className="text-sm text-gray-500">Posted on {dateStr}</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${statusColors[order.status]}`}>
+        <span className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${statusColors[order.status]}`}>
           {order.status}
         </span>
       </div>
 
-      <div className="space-y-3 mb-6">
+      <div className="space-y-3 mb-6 flex-grow">
         <p className="text-gray-700 text-sm leading-relaxed">{order.description}</p>
-        <div className="flex items-center text-sm text-gray-600">
+        <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
             <span className="font-medium mr-2">Deadline:</span> {deadlineStr}
         </div>
+        
         {order.fileId && (
-            <a 
-                href={getFileDownload(order.fileId)}
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-flex items-center text-sm text-primary hover:underline mt-2"
-            >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Download Attachment
-            </a>
+            <div className="mt-2">
+                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Attachment</h4>
+                 <a 
+                    href={getFileDownload(order.fileId)}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center text-sm text-primary hover:underline"
+                >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download Instructions
+                </a>
+            </div>
         )}
       </div>
 
+      {/* Admin Controls */}
       {role === UserRole.ADMIN && onStatusChange && (
-        <div className="pt-4 border-t border-gray-100">
-            <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase">Update Status</label>
+        <div className="pt-4 border-t border-gray-100 mt-auto">
+            <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase">Assignment Status</label>
             <select
-                className="w-full sm:w-auto text-sm border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 p-2 border"
+                className="w-full text-sm border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 p-2 border"
                 value={order.status}
                 onChange={(e) => onStatusChange(order.$id, e.target.value as OrderStatus)}
             >
@@ -68,6 +97,36 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange }) =>
                     </option>
                 ))}
             </select>
+        </div>
+      )}
+
+      {/* Client Submission Area */}
+      {role === UserRole.CLIENT && (
+        <div className="pt-4 border-t border-gray-100 mt-auto">
+            <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase">Submit Your Work</h4>
+            {submitted ? (
+                <div className="text-green-600 text-sm font-medium flex items-center bg-green-50 p-2 rounded-lg">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Submitted Successfully
+                </div>
+            ) : (
+                <form onSubmit={handleSubmitWork} className="space-y-2">
+                    <input 
+                        type="file" 
+                        className="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-xs file:font-semibold
+                        file:bg-indigo-50 file:text-indigo-700
+                        hover:file:bg-indigo-100"
+                        onChange={(e) => setSubmissionFile(e.target.files ? e.target.files[0] : null)}
+                        required
+                    />
+                    <Button type="submit" variant="primary" className="w-full text-sm py-1.5" disabled={!submissionFile} isLoading={submitting}>
+                        Upload & Submit
+                    </Button>
+                </form>
+            )}
         </div>
       )}
     </div>

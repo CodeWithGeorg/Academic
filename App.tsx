@@ -24,15 +24,15 @@ const App: React.FC = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
 
-              {/* Client Routes */}
+              {/* Client & Admin Shared Routes */}
               <Route element={<PrivateRoute allowedRoles={[UserRole.CLIENT, UserRole.ADMIN]} />}>
                 <Route path="/dashboard" element={<ClientDashboard />} />
-                <Route path="/place-order" element={<PlaceOrder />} />
               </Route>
 
               {/* Admin Routes */}
               <Route element={<PrivateRoute allowedRoles={[UserRole.ADMIN]} />}>
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/place-order" element={<PlaceOrder />} />
               </Route>
             </Routes>
           </main>

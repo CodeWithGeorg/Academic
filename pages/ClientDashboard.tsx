@@ -48,7 +48,7 @@ const ClientDashboard: React.FC = () => {
         }
     });
 
-    // 2. Subscribe to Submissions (Grading updates)
+    // 2. Subscribe to Submissions (Grading updates AND new submissions)
     const unsubSubmissions = subscribeToCollection(APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID, (payload) => {
          const updatedSub = payload.payload as Submission;
          
@@ -61,6 +61,9 @@ const ClientDashboard: React.FC = () => {
                  if (updatedSub.status === 'graded' || updatedSub.status === 'approved') {
                      showNotification(`Your submission has been updated: ${updatedSub.status.toUpperCase()}`);
                  }
+             }
+             if (payload.events.some((event: string) => event.includes('create'))) {
+                 setSubmissions(prev => [updatedSub, ...prev]);
              }
          }
     });

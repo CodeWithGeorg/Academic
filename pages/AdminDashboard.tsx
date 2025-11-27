@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getAllOrders, updateOrderStatus, getFileDownload, getAllSubmissions, updateSubmissionStatus, subscribeToCollection } from '../services/appwrite';
-import { Order, Submission } from '../types';
-import { OrderStatus, APPWRITE_CONFIG } from '../constants';
+import { getAllOrders, updateOrderStatus, getFileDownload, getAllSubmissions, updateSubmissionStatus, subscribeToCollection, getAllUsers } from '../services/appwrite';
+import { Order, Submission, UserProfile } from '../types';
+import { OrderStatus, APPWRITE_CONFIG, UserRole } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import OrderCard from '../components/OrderCard';
 import Input from '../components/Input';
@@ -13,22 +13,25 @@ const AdminDashboard: React.FC = () => {
   // Data States
   const [orders, setOrders] = useState<Order[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   
   // UI States
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'assignments' | 'submissions'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'submissions' | 'students'>('assignments');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
   const fetchData = async () => {
     try {
-      const [ordersData, submissionsData] = await Promise.all([
+      const [ordersData, submissionsData, usersData] = await Promise.all([
         getAllOrders(),
-        getAllSubmissions()
+        getAllSubmissions(),
+        getAllUsers()
       ]);
       setOrders(ordersData);
       setSubmissions(submissionsData);
+      setUsers(usersData);
     } catch (error) {
       console.error("Admin fetch error", error);
     } finally {
@@ -57,9 +60,17 @@ const AdminDashboard: React.FC = () => {
          }
     });
 
+    // 3. Subscribe to Users
+    const unsubUsers = subscribeToCollection(APPWRITE_CONFIG.USERS_COLLECTION_ID, (payload) => {
+         if (payload.events.some((e: string) => e.includes('create'))) {
+             setUsers(prev => [payload.payload, ...prev]);
+         }
+    });
+
     return () => {
         unsubOrders();
         unsubSubmissions();
+        unsubUsers();
     }
   }, []);
 
@@ -94,6 +105,12 @@ const AdminDashboard: React.FC = () => {
   const getAssignmentTitle = (assignmentId: string) => {
     const found = orders.find(o => o.$id === assignmentId);
     return found ? found.title : 'Unknown Assignment';
+  };
+
+  // Helper to find Student Name
+  const getStudentName = (studentId: string) => {
+      const found = users.find(u => u.$id === studentId);
+      return found ? found.name : 'Unknown User';
   };
 
   // --- Stats Logic ---
@@ -135,10 +152,10 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Tabs */}
-      <div className="flex space-x-4 border-b border-gray-200 mb-6">
+      <div className="flex space-x-4 border-b border-gray-200 mb-6 overflow-x-auto">
         <button
             onClick={() => setActiveTab('assignments')}
-            className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'assignments' 
                 ? 'border-primary text-primary' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -148,7 +165,7 @@ const AdminDashboard: React.FC = () => {
         </button>
         <button
             onClick={() => setActiveTab('submissions')}
-            className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'submissions' 
                 ? 'border-primary text-primary' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -161,9 +178,19 @@ const AdminDashboard: React.FC = () => {
                 </span>
             )}
         </button>
+        <button
+            onClick={() => setActiveTab('students')}
+            className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'students' 
+                ? 'border-primary text-primary' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+        >
+            Students ({users.filter(u => u.role === UserRole.CLIENT).length})
+        </button>
       </div>
 
-      {activeTab === 'assignments' ? (
+      {activeTab === 'assignments' && (
           <>
             {/* Stats Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
@@ -339,7 +366,9 @@ const AdminDashboard: React.FC = () => {
                 </>
             )}
           </>
-      ) : (
+      )}
+
+      {activeTab === 'submissions' && (
           /* --- Submissions Tab --- */
           <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
              {submissions.length === 0 ? (
@@ -351,7 +380,7 @@ const AdminDashboard: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignment</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
@@ -361,14 +390,15 @@ const AdminDashboard: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {submissions.map((sub) => (
                                 <tr key={sub.$id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {sub.studentId.substring(0,8)}...
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{getStudentName(sub.studentId)}</div>
+                                        <div className="text-xs text-gray-400">{sub.studentId.substring(0,8)}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {getAssignmentTitle(sub.assignmentId)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(sub.submittedAt).toLocaleDateString()}
+                                        {new Date(sub.submittedAt).toLocaleDateString()} {new Date(sub.submittedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <a 
@@ -383,7 +413,11 @@ const AdminDashboard: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <div className="flex items-center space-x-2">
                                             <select 
-                                                className="border rounded px-2 py-1 text-xs"
+                                                className={`border rounded px-2 py-1 text-xs font-medium ${
+                                                    sub.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                                    sub.status === 'graded' ? 'bg-blue-100 text-blue-800' :
+                                                    sub.status === 'rejected' ? 'bg-red-100 text-red-800' : ''
+                                                }`}
                                                 value={sub.status}
                                                 onChange={(e) => handleGradeSubmission(sub.$id, e.target.value, sub.grade || '')}
                                             >
@@ -394,7 +428,7 @@ const AdminDashboard: React.FC = () => {
                                             </select>
                                             <input 
                                                 type="text" 
-                                                placeholder="Grade (e.g. A)" 
+                                                placeholder="Grade" 
                                                 className="border rounded px-2 py-1 text-xs w-20"
                                                 value={sub.grade || ''}
                                                 onChange={(e) => {
@@ -412,6 +446,51 @@ const AdminDashboard: React.FC = () => {
                     </table>
                 </div>
              )}
+          </div>
+      )}
+
+      {activeTab === 'students' && (
+          /* --- Students Tab --- */
+          <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+              <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                          <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined At</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submissions</th>
+                          </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                          {users.map((u) => (
+                              <tr key={u.$id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="text-sm font-medium text-gray-900">{u.name}</div>
+                                      <div className="text-xs text-gray-400">{u.$id}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      {u.email}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                          u.role === UserRole.ADMIN ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                                      }`}>
+                                          {u.role.toUpperCase()}
+                                      </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      {new Date(u.createdAt).toLocaleDateString()}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      {submissions.filter(s => s.studentId === u.$id).length}
+                                  </td>
+                              </tr>
+                          ))}
+                      </tbody>
+                  </table>
+              </div>
           </div>
       )}
     </div>

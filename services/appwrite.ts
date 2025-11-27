@@ -233,7 +233,7 @@ export const getUserSubmissions = async (userId: string): Promise<Submission[]> 
         return response.documents as unknown as Submission[];
     } catch (error) {
         console.warn("Fetch submissions failed (using demo data).");
-        return MOCK_SUBMISSIONS;
+        // return MOCK_SUBMISSIONS;
     }
 }
 

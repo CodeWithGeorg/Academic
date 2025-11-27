@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Fetch role from database
       const userRole = await getUserRole(accountDetails.$id);
       setRole(userRole);
+      
     } catch (error) {
       setUser(null);
       setRole(null);
@@ -35,7 +36,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    await account.deleteSession('current');
+    try {
+        await account.deleteSession('current');
+    } catch (e) {
+        console.warn("Logout failed (possibly already logged out)");
+    }
     setUser(null);
     setRole(null);
   };

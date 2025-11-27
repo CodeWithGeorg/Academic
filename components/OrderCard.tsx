@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Order } from '../types';
+import { Order, Submission } from '../types';
 import { OrderStatus, UserRole } from '../constants';
 import { getFileDownload, uploadFile, submitAssignment } from '../services/appwrite';
 import Button from './Button';
@@ -9,6 +9,7 @@ interface OrderCardProps {
   order: Order;
   role: UserRole | null;
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
+  onSubmissionSuccess?: (submission: Submission) => void;
 }
 
 const statusColors: Record<OrderStatus, string> = {
@@ -19,7 +20,7 @@ const statusColors: Record<OrderStatus, string> = {
   [OrderStatus.APPROVED]: 'bg-purple-100 text-purple-800',
 };
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange, onSubmissionSuccess }) => {
   const { user } = useAuth();
   const dateStr = new Date(order.$createdAt).toLocaleDateString();
   const deadlineStr = new Date(order.deadline).toLocaleDateString();
@@ -35,9 +36,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange }) =>
     setSubmitting(true);
     try {
         const file = await uploadFile(submissionFile);
-        await submitAssignment(order.$id, user.$id, file.$id);
+        const result = await submitAssignment(order.$id, user.$id, file.$id);
+        
         setSubmitted(true);
         setSubmissionFile(null);
+        
+        // Notify parent to update UI instantly
+        if (onSubmissionSuccess && result) {
+            onSubmissionSuccess(result as unknown as Submission);
+        }
     } catch (err) {
         console.error("Submission error", err);
         alert("Failed to submit work");

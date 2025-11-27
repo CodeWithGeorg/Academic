@@ -162,14 +162,20 @@ const ClientDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {orders.map((order) => (
-                <OrderCard 
-                  key={order.$id} 
-                  order={order} 
-                  role={role} 
-                  onSubmissionSuccess={handleManualSubmission}
-                />
-              ))}
+              {orders.map((order) => {
+                // Check if user has already submitted for this specific assignment
+                const userSubmission = submissions.find(s => s.assignmentId === order.$id);
+                
+                return (
+                  <OrderCard 
+                    key={order.$id} 
+                    order={order} 
+                    role={role} 
+                    existingSubmission={userSubmission} // Pass existing submission
+                    onSubmissionSuccess={handleManualSubmission}
+                  />
+                );
+              })}
             </div>
           )
       ) : (

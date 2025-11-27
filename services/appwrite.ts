@@ -19,6 +19,37 @@ export const subscribeToCollection = (collectionId: string, callback: (payload: 
 };
 
 // --- Mock Data for Demo Mode ---
+const MOCK_USERS: UserProfile[] = [
+    {
+        $id: 'user-1',
+        name: 'Demo Client',
+        email: 'client@demo.com',
+        role: UserRole.CLIENT,
+        createdAt: new Date(Date.now() - 86400000 * 10).toISOString()
+    },
+    {
+        $id: 'user-2',
+        name: 'Alice Student',
+        email: 'alice@example.com',
+        role: UserRole.CLIENT,
+        createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
+    },
+    {
+        $id: 'user-3',
+        name: 'Bob Scholar',
+        email: 'bob@example.com',
+        role: UserRole.CLIENT,
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+    },
+    {
+        $id: 'admin-1',
+        name: 'Demo Admin',
+        email: 'admin@gmail.com',
+        role: UserRole.ADMIN,
+        createdAt: new Date(Date.now() - 86400000 * 20).toISOString()
+    }
+];
+
 const MOCK_ORDERS: Order[] = [
   {
     $id: 'mock-1',
@@ -80,6 +111,21 @@ const MOCK_SUBMISSIONS: Submission[] = [
         submittedAt: new Date().toISOString(),
         status: 'graded',
         grade: 'A-'
+    },
+    {
+        $id: 'sub-2',
+        $collectionId: 'submissions',
+        $databaseId: 'db',
+        $createdAt: new Date(Date.now() - 100000).toISOString(),
+        $updatedAt: new Date().toISOString(),
+        $permissions: [],
+        $sequence: 0,
+        assignmentId: 'mock-1',
+        studentId: 'user-2',
+        fileId: 'mock-file-sub-2',
+        submittedAt: new Date(Date.now() - 100000).toISOString(),
+        status: 'submitted',
+        grade: ''
     }
 ];
 
@@ -116,6 +162,20 @@ export const getUserRole = async (userId: string): Promise<UserRole> => {
     console.warn("Could not fetch user role, defaulting to client.", error);
     return UserRole.CLIENT;
   }
+};
+
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+    try {
+        const response = await databases.listDocuments(
+            APPWRITE_CONFIG.DATABASE_ID,
+            APPWRITE_CONFIG.USERS_COLLECTION_ID,
+            [Query.orderDesc('createdAt'), Query.limit(100)]
+        );
+        return response.documents as unknown as UserProfile[];
+    } catch (error) {
+        console.warn("Fetch users failed (using demo data).");
+        return MOCK_USERS as unknown as UserProfile[];
+    }
 };
 
 // --- Assignment/Order Services ---

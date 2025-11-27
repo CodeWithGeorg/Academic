@@ -63,7 +63,11 @@ const ClientDashboard: React.FC = () => {
                  }
              }
              if (payload.events.some((event: string) => event.includes('create'))) {
-                 setSubmissions(prev => [updatedSub, ...prev]);
+                 // Check if already exists (prevent duplicate if manual handler fired first)
+                 setSubmissions(prev => {
+                     if (prev.find(s => s.$id === updatedSub.$id)) return prev;
+                     return [updatedSub, ...prev];
+                 });
              }
          }
     });
@@ -77,6 +81,15 @@ const ClientDashboard: React.FC = () => {
   const showNotification = (msg: string) => {
       setNotification({ message: msg, show: true });
       setTimeout(() => setNotification({ message: '', show: false }), 5000);
+  };
+
+  const handleManualSubmission = (newSub: Submission) => {
+      // Instantly update state (for Demo mode or fast UI response)
+      setSubmissions(prev => {
+          if (prev.find(s => s.$id === newSub.$id)) return prev;
+          return [newSub, ...prev];
+      });
+      showNotification("Work Submitted Successfully!");
   };
 
   // Helper to get assignment title for a submission
@@ -150,7 +163,12 @@ const ClientDashboard: React.FC = () => {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {orders.map((order) => (
-                <OrderCard key={order.$id} order={order} role={role} />
+                <OrderCard 
+                  key={order.$id} 
+                  order={order} 
+                  role={role} 
+                  onSubmissionSuccess={handleManualSubmission}
+                />
               ))}
             </div>
           )

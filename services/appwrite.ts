@@ -65,21 +65,21 @@ const MOCK_ORDERS: Order[] = [
   }
 ];
 
-const MOCK_SUBMISSIONS: Submission[] = [
-    {
-        $id: 'sub-1',
-        $collectionId: 'submissions',
-        $databaseId: 'db',
-        $createdAt: new Date().toISOString(),
-        $updatedAt: new Date().toISOString(),
-        $assignmentId: 'mock-3',
-        studentId: 'user-1',
-        fileId: 'mock-file-sub',
-        submittedAt: new Date().toISOString(),
-        status: 'graded',
-        grade: 'A-'
-    }
-];
+// const MOCK_SUBMISSIONS: Submission[] = [
+//     {
+//         $id: 'sub-1',
+//         $collectionId: 'submissions',
+//         $databaseId: 'db',
+//         $createdAt: new Date().toISOString(),
+//         $updatedAt: new Date().toISOString(),
+//         assignmentId: 'mock-3',
+//         studentId: 'user-1',
+//         fileId: 'mock-file-sub',
+//         submittedAt: new Date().toISOString(),
+//         status: 'graded',
+//         grade: 'A-'
+//     }
+// ];
 
 // --- User Services ---
 
@@ -236,6 +236,33 @@ export const getUserSubmissions = async (userId: string): Promise<Submission[]> 
         return MOCK_SUBMISSIONS;
     }
 }
+
+export const getAllSubmissions = async (): Promise<Submission[]> => {
+    try {
+        const response = await databases.listDocuments(
+            APPWRITE_CONFIG.DATABASE_ID,
+            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+            [Query.orderDesc('submittedAt'), Query.limit(100)]
+        );
+        return response.documents as unknown as Submission[];
+    } catch (error) {
+        // return MOCK_SUBMISSIONS;
+    }
+};
+
+export const updateSubmissionStatus = async (submissionId: string, status: string, grade?: string) => {
+    try {
+        return await databases.updateDocument(
+            APPWRITE_CONFIG.DATABASE_ID,
+            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+            submissionId,
+            { status, grade }
+        );
+    } catch (error) {
+        console.warn("Update submission failed (demo mode)");
+        return null;
+    }
+};
 
 // --- File Services ---
 

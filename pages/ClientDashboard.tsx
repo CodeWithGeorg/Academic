@@ -11,6 +11,9 @@ const ClientDashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'assignments' | 'submissions'>('assignments');
+  
+  // Notification State
+  const [notification, setNotification] = useState<{message: string, show: boolean}>({ message: '', show: false });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,28 +35,46 @@ const ClientDashboard: React.FC = () => {
 
     fetchData();
 
-    // Realtime Subscription
-    let unsubscribe: () => void;
-    try {
-        unsubscribe = subscribeToCollection(APPWRITE_CONFIG.ORDERS_COLLECTION_ID, (payload) => {
-            if (payload.events.some((event: string) => event.includes('create'))) {
-                const newOrder = payload.payload as Order;
-                setOrders(prev => [newOrder, ...prev]);
-            }
-            if (payload.events.some((event: string) => event.includes('update'))) {
-                const updatedOrder = payload.payload as Order;
-                setOrders(prev => prev.map(o => o.$id === updatedOrder.$id ? updatedOrder : o));
-            }
-        });
-    } catch (e) {
-        console.warn("Realtime subscription failed (likely demo mode)");
-        unsubscribe = () => {};
-    }
+    // 1. Subscribe to Assignments (New homework posted)
+    const unsubOrders = subscribeToCollection(APPWRITE_CONFIG.ORDERS_COLLECTION_ID, (payload) => {
+        if (payload.events.some((event: string) => event.includes('create'))) {
+            const newOrder = payload.payload as Order;
+            setOrders(prev => [newOrder, ...prev]);
+            showNotification("New Assignment Posted: " + newOrder.title);
+        }
+        if (payload.events.some((event: string) => event.includes('update'))) {
+            const updatedOrder = payload.payload as Order;
+            setOrders(prev => prev.map(o => o.$id === updatedOrder.$id ? updatedOrder : o));
+        }
+    });
+
+    // 2. Subscribe to Submissions (Grading updates)
+    const unsubSubmissions = subscribeToCollection(APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID, (payload) => {
+         const updatedSub = payload.payload as Submission;
+         
+         // Only care about MY submissions
+         if (user && updatedSub.studentId === user.$id) {
+             if (payload.events.some((event: string) => event.includes('update'))) {
+                 setSubmissions(prev => prev.map(s => s.$id === updatedSub.$id ? updatedSub : s));
+                 
+                 // Show notification if status changed or graded
+                 if (updatedSub.status === 'graded' || updatedSub.status === 'approved') {
+                     showNotification(`Your submission has been updated: ${updatedSub.status.toUpperCase()}`);
+                 }
+             }
+         }
+    });
 
     return () => {
-        if(unsubscribe) unsubscribe();
+        unsubOrders();
+        unsubSubmissions();
     };
   }, [user]);
+
+  const showNotification = (msg: string) => {
+      setNotification({ message: msg, show: true });
+      setTimeout(() => setNotification({ message: '', show: false }), 5000);
+  };
 
   // Helper to get assignment title for a submission
   const getAssignmentTitle = (assignmentId: string) => {
@@ -70,7 +91,18 @@ const ClientDashboard: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+      
+      {/* Toast Notification */}
+      {notification.show && (
+          <div className="fixed top-20 right-4 z-50 bg-indigo-600 text-white px-6 py-4 rounded-lg shadow-xl animate-bounce">
+              <div className="flex items-center">
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  <span className="font-medium">{notification.message}</span>
+              </div>
+          </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
         <div>
             <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>

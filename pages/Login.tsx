@@ -21,11 +21,13 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
+      // 1. Attempt Login
       await account.createEmailPasswordSession(email, password);
-      // Update global context
+
+      // 2. Update global context
       await checkUserStatus();
       
-      // Determine redirection based on role
+      // 3. Determine redirection based on role
       const user = await account.get();
       const role = await getUserRole(user.$id);
       

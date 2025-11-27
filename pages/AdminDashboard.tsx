@@ -42,29 +42,33 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
 
+    // Helper to handle real-time updates for any list
+    const handleRealtime = (payload: any, setList: React.Dispatch<React.SetStateAction<any[]>>) => {
+        const events = payload.events as string[];
+        const doc = payload.payload;
+
+        if (events.some(e => e.includes('.create'))) {
+            setList(prev => [doc, ...prev]);
+        } else if (events.some(e => e.includes('.update'))) {
+            setList(prev => prev.map(item => item.$id === doc.$id ? doc : item));
+        } else if (events.some(e => e.includes('.delete'))) {
+            setList(prev => prev.filter(item => item.$id !== doc.$id));
+        }
+    };
+
     // 1. Subscribe to Assignments (Orders)
     const unsubOrders = subscribeToCollection(APPWRITE_CONFIG.ORDERS_COLLECTION_ID, (payload) => {
-         if (payload.events.some((e: string) => e.includes('create'))) {
-             setOrders(prev => [payload.payload, ...prev]);
-         } else if (payload.events.some((e: string) => e.includes('update'))) {
-             setOrders(prev => prev.map(o => o.$id === payload.payload.$id ? payload.payload : o));
-         }
+         handleRealtime(payload, setOrders);
     });
 
     // 2. Subscribe to Submissions
     const unsubSubmissions = subscribeToCollection(APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID, (payload) => {
-         if (payload.events.some((e: string) => e.includes('create'))) {
-             setSubmissions(prev => [payload.payload, ...prev]);
-         } else if (payload.events.some((e: string) => e.includes('update'))) {
-             setSubmissions(prev => prev.map(s => s.$id === payload.payload.$id ? payload.payload : s));
-         }
+         handleRealtime(payload, setSubmissions);
     });
 
     // 3. Subscribe to Users
     const unsubUsers = subscribeToCollection(APPWRITE_CONFIG.USERS_COLLECTION_ID, (payload) => {
-         if (payload.events.some((e: string) => e.includes('create'))) {
-             setUsers(prev => [payload.payload, ...prev]);
-         }
+         handleRealtime(payload, setUsers);
     });
 
     return () => {

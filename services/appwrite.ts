@@ -18,121 +18,9 @@ export const subscribeToCollection = (collectionId: string, callback: (payload: 
   return client.subscribe(`databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${collectionId}.documents`, callback);
 };
 
-// --- Mock Data for Demo Mode ---
-const MOCK_USERS: UserProfile[] = [
-    {
-        $id: 'user-1',
-        name: 'Demo Client',
-        email: 'client@demo.com',
-        role: UserRole.CLIENT,
-        createdAt: new Date(Date.now() - 86400000 * 10).toISOString()
-    },
-    {
-        $id: 'user-2',
-        name: 'Alice Student',
-        email: 'alice@example.com',
-        role: UserRole.CLIENT,
-        createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
-    },
-    {
-        $id: 'user-3',
-        name: 'Bob Scholar',
-        email: 'bob@example.com',
-        role: UserRole.CLIENT,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-    },
-    {
-        $id: 'admin-1',
-        name: 'Demo Admin',
-        email: 'admin@gmail.com',
-        role: UserRole.ADMIN,
-        createdAt: new Date(Date.now() - 86400000 * 20).toISOString()
-    }
-];
-
-const MOCK_ORDERS: Order[] = [
-  {
-    $id: 'mock-1',
-    $collectionId: 'orders',
-    $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
-    $updatedAt: new Date().toISOString(),
-    $permissions: [],
-    $sequence: 0,
-    userId: 'admin-1',
-    title: 'Assignment 1: Quantum Physics Intro',
-    description: 'Read the attached PDF and answer the questions on page 5 regarding error correction.',
-    deadline: new Date(Date.now() + 86400000 * 5).toISOString(),
-    status: OrderStatus.PENDING,
-    fileId: 'mock-file',
-  },
-  {
-    $id: 'mock-2',
-    $collectionId: 'orders',
-    $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    $updatedAt: new Date().toISOString(),
-    $permissions: [],
-    $sequence: 0,
-    userId: 'admin-1',
-    title: 'Project: Market Trends Analysis',
-    description: 'Use the provided dataset to analyze Q3 market trends. Submit your report as a PDF.',
-    deadline: new Date(Date.now() + 86400000 * 7).toISOString(),
-    status: OrderStatus.IN_PROGRESS,
-  },
-  {
-    $id: 'mock-3',
-    $collectionId: 'orders',
-    $databaseId: 'db',
-    $createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    $updatedAt: new Date().toISOString(),
-    $permissions: [],
-    $sequence: 0,
-    userId: 'admin-1',
-    title: 'Essay: The Great Depression',
-    description: 'Write a 1500 word essay on the economic impact of the Great Depression.',
-    deadline: new Date(Date.now() - 86400000 * 1).toISOString(),
-    status: OrderStatus.COMPLETED,
-  }
-];
-
-const MOCK_SUBMISSIONS: Submission[] = [
-    {
-        $id: 'sub-1',
-        $collectionId: 'submissions',
-        $databaseId: 'db',
-        $createdAt: new Date().toISOString(),
-        $updatedAt: new Date().toISOString(),
-        $permissions: [],
-        $sequence: 0,
-        assignmentId: 'mock-3',
-        studentId: 'user-1',
-        fileId: 'mock-file-sub',
-        submittedAt: new Date().toISOString(),
-        status: 'graded',
-        grade: 'A-'
-    },
-    {
-        $id: 'sub-2',
-        $collectionId: 'submissions',
-        $databaseId: 'db',
-        $createdAt: new Date(Date.now() - 100000).toISOString(),
-        $updatedAt: new Date().toISOString(),
-        $permissions: [],
-        $sequence: 0,
-        assignmentId: 'mock-1',
-        studentId: 'user-2',
-        fileId: 'mock-file-sub-2',
-        submittedAt: new Date(Date.now() - 100000).toISOString(),
-        status: 'submitted',
-        grade: ''
-    }
-];
-
 // --- User Services ---
 
 export const createUserDocument = async (userId: string, name: string, email: string, role: UserRole = UserRole.CLIENT) => {
-  try {
     return await databases.createDocument(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.USERS_COLLECTION_ID,
@@ -144,10 +32,6 @@ export const createUserDocument = async (userId: string, name: string, email: st
         createdAt: new Date().toISOString(),
       }
     );
-  } catch (error) {
-    console.warn("Error creating user document (possibly demo mode):", error);
-    return null;
-  }
 };
 
 export const getUserRole = async (userId: string): Promise<UserRole> => {
@@ -159,23 +43,18 @@ export const getUserRole = async (userId: string): Promise<UserRole> => {
     );
     return (doc.role as UserRole) || UserRole.CLIENT;
   } catch (error) {
-    console.warn("Could not fetch user role, defaulting to client.", error);
+    console.error("Could not fetch user role, defaulting to client.", error);
     return UserRole.CLIENT;
   }
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
-    try {
-        const response = await databases.listDocuments(
-            APPWRITE_CONFIG.DATABASE_ID,
-            APPWRITE_CONFIG.USERS_COLLECTION_ID,
-            [Query.orderDesc('createdAt'), Query.limit(100)]
-        );
-        return response.documents as unknown as UserProfile[];
-    } catch (error) {
-        console.warn("Fetch users failed (using demo data).");
-        return MOCK_USERS as unknown as UserProfile[];
-    }
+    const response = await databases.listDocuments(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.USERS_COLLECTION_ID,
+        [Query.orderDesc('createdAt'), Query.limit(100)]
+    );
+    return response.documents as unknown as UserProfile[];
 };
 
 // --- Assignment/Order Services ---
@@ -184,7 +63,6 @@ export const createOrder = async (
   userId: string,
   data: { title: string; description: string; deadline: string; fileId?: string }
 ) => {
-  try {
     return await databases.createDocument(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
@@ -196,46 +74,20 @@ export const createOrder = async (
         createdAt: new Date().toISOString(),
       }
     );
-  } catch (error) {
-    console.warn("Create order failed (demo mode), returning mock.");
-    const mockOrder = {
-      $id: 'temp-mock-id-' + Date.now(),
-      $collectionId: 'orders',
-      $databaseId: 'db',
-      $createdAt: new Date().toISOString(),
-      $updatedAt: new Date().toISOString(),
-      $permissions: [],
-      $sequence: 0,
-      userId,
-      ...data,
-      status: OrderStatus.PENDING,
-    } as unknown as Order;
-    
-    // Persist to mock data
-    MOCK_ORDERS.unshift(mockOrder);
-    
-    return mockOrder;
-  }
 };
 
-// Now used to fetch ALL Assignments for the students
+// Fetch ALL Assignments for the students
 export const getClientOrders = async (userId: string): Promise<Order[]> => {
-  try {
+    // We ignore userId here because assignments are public to all students
     const response = await databases.listDocuments(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [Query.orderDesc('$createdAt')]
     );
     return response.documents as unknown as Order[];
-  } catch (error) {
-    console.warn("Fetch client orders failed (using demo data).", error);
-    // Return ALL mock orders regardless of user, as these are assignments
-    return MOCK_ORDERS;
-  }
 };
 
 export const getAllOrders = async (): Promise<Order[]> => {
-  try {
     const response = await databases.listDocuments(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
@@ -245,136 +97,73 @@ export const getAllOrders = async (): Promise<Order[]> => {
       ]
     );
     return response.documents as unknown as Order[];
-  } catch (error) {
-    console.warn("Fetch all orders failed (using demo data).", error);
-    return MOCK_ORDERS;
-  }
 };
 
 export const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
-  try {
     return await databases.updateDocument(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       orderId,
       { status }
     );
-  } catch (error) {
-    console.warn("Update status failed (demo mode).");
-    // Update mock data
-    const index = MOCK_ORDERS.findIndex(o => o.$id === orderId);
-    if (index !== -1) {
-        MOCK_ORDERS[index] = { ...MOCK_ORDERS[index], status };
-    }
-    return null;
-  }
 };
 
 // --- Submission Services ---
 
 export const submitAssignment = async (assignmentId: string, studentId: string, fileId: string, notes?: string) => {
-    try {
-        return await databases.createDocument(
-            APPWRITE_CONFIG.DATABASE_ID,
-            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
-            ID.unique(),
-            {
-                assignmentId,
-                studentId,
-                fileId,
-                notes,
-                submittedAt: new Date().toISOString(),
-                status: 'submitted'
-            }
-        );
-    } catch (error) {
-        console.warn("Submission failed (demo mode).");
-        const mockSubmission = {
-            $id: 'mock-submission-id-' + Date.now(),
-            $collectionId: 'submissions',
-            $databaseId: 'db',
-            $createdAt: new Date().toISOString(),
-            $updatedAt: new Date().toISOString(),
-            $permissions: [],
-            $sequence: 0,
+    return await databases.createDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+        ID.unique(),
+        {
             assignmentId,
             studentId,
             fileId,
             notes,
             submittedAt: new Date().toISOString(),
-            status: 'submitted',
-            grade: ''
-        } as unknown as Submission;
-        
-        // Persist to mock data
-        MOCK_SUBMISSIONS.unshift(mockSubmission);
-        
-        return mockSubmission;
-    }
+            status: 'submitted'
+        }
+    );
 }
 
 export const getUserSubmissions = async (userId: string): Promise<Submission[]> => {
-    try {
-        const response = await databases.listDocuments(
-            APPWRITE_CONFIG.DATABASE_ID,
-            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
-            [
-                Query.equal('studentId', userId),
-                Query.orderDesc('submittedAt')
-            ]
-        );
-        return response.documents as unknown as Submission[];
-    } catch (error) {
-        console.warn("Fetch submissions failed (using demo data).");
-        return MOCK_SUBMISSIONS.filter(s => s.studentId === userId);
-    }
+    const response = await databases.listDocuments(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+        [
+            Query.equal('studentId', userId),
+            Query.orderDesc('submittedAt')
+        ]
+    );
+    return response.documents as unknown as Submission[];
 }
 
 export const getAllSubmissions = async (): Promise<Submission[]> => {
-    try {
-        const response = await databases.listDocuments(
-            APPWRITE_CONFIG.DATABASE_ID,
-            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
-            [Query.orderDesc('submittedAt'), Query.limit(100)]
-        );
-        return response.documents as unknown as Submission[];
-    } catch (error) {
-        return MOCK_SUBMISSIONS;
-    }
+    const response = await databases.listDocuments(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+        [Query.orderDesc('submittedAt'), Query.limit(100)]
+    );
+    return response.documents as unknown as Submission[];
 };
 
 export const updateSubmissionStatus = async (submissionId: string, status: string, grade?: string) => {
-    try {
-        return await databases.updateDocument(
-            APPWRITE_CONFIG.DATABASE_ID,
-            APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
-            submissionId,
-            { status, grade }
-        );
-    } catch (error) {
-        console.warn("Update submission failed (demo mode)");
-        // Update mock data
-        const index = MOCK_SUBMISSIONS.findIndex(s => s.$id === submissionId);
-        if (index !== -1) {
-            MOCK_SUBMISSIONS[index] = { ...MOCK_SUBMISSIONS[index], status: status as any, grade };
-        }
-        return null;
-    }
+    return await databases.updateDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
+        submissionId,
+        { status, grade }
+    );
 };
 
 // --- File Services ---
 
 export const uploadFile = async (file: File) => {
-  try {
     return await storage.createFile(
       APPWRITE_CONFIG.BUCKET_ID,
       ID.unique(),
       file
     );
-  } catch (error) {
-    console.warn("File upload failed (demo mode).");
-    return { $id: 'mock-file-id' } as Models.File;
-  }
 };
 
 export const getFileView = (fileId: string) => {

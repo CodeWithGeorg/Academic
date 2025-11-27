@@ -52,7 +52,10 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     const response = await databases.listDocuments(
         APPWRITE_CONFIG.DATABASE_ID,
         APPWRITE_CONFIG.USERS_COLLECTION_ID,
-        [Query.orderDesc('createdAt'), Query.limit(100)]
+        [
+            Query.orderDesc('createdAt'), 
+            Query.limit(5000) // Increased limit to fetch all users
+        ]
     );
     return response.documents as unknown as UserProfile[];
 };
@@ -82,7 +85,10 @@ export const getClientOrders = async (userId: string): Promise<Order[]> => {
     const response = await databases.listDocuments(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
-      [Query.orderDesc('$createdAt')]
+      [
+          Query.orderDesc('$createdAt'),
+          Query.limit(1000) // Ensure students see all active assignments
+      ]
     );
     return response.documents as unknown as Order[];
 };
@@ -93,7 +99,7 @@ export const getAllOrders = async (): Promise<Order[]> => {
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [
         Query.orderDesc('$createdAt'),
-        Query.limit(100)
+        Query.limit(5000) // Increased limit to fetch all assignments
       ]
     );
     return response.documents as unknown as Order[];
@@ -132,7 +138,8 @@ export const getUserSubmissions = async (userId: string): Promise<Submission[]> 
         APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
         [
             Query.equal('studentId', userId),
-            Query.orderDesc('submittedAt')
+            Query.orderDesc('submittedAt'),
+            Query.limit(1000)
         ]
     );
     return response.documents as unknown as Submission[];
@@ -142,7 +149,10 @@ export const getAllSubmissions = async (): Promise<Submission[]> => {
     const response = await databases.listDocuments(
         APPWRITE_CONFIG.DATABASE_ID,
         APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
-        [Query.orderDesc('submittedAt'), Query.limit(100)]
+        [
+            Query.orderDesc('submittedAt'), 
+            Query.limit(5000) // Increased limit to fetch all submissions
+        ]
     );
     return response.documents as unknown as Submission[];
 };

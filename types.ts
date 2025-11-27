@@ -23,7 +23,7 @@ export interface Order extends Models.Document {
   $createdAt: string;
   $updatedAt: string;
   $permissions: string[];
-  $sequence?: number;
+  $sequence: number;
 }
 
 export interface Submission extends Models.Document {
@@ -40,6 +40,8 @@ export interface Submission extends Models.Document {
   $databaseId: string;
   $createdAt: string;
   $updatedAt: string;
+  $permissions: string[];
+  $sequence: number;
 }
 
 export interface OrderStats {

@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 interface OrderCardProps {
   order: Order;
   role: UserRole | null;
+  existingSubmission?: Submission; // New Prop
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
   onSubmissionSuccess?: (submission: Submission) => void;
 }
@@ -20,14 +21,20 @@ const statusColors: Record<OrderStatus, string> = {
   [OrderStatus.APPROVED]: 'bg-purple-100 text-purple-800',
 };
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange, onSubmissionSuccess }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, role, existingSubmission, onStatusChange, onSubmissionSuccess }) => {
   const { user } = useAuth();
   const dateStr = new Date(order.$createdAt).toLocaleDateString();
   const deadlineStr = new Date(order.deadline).toLocaleDateString();
   
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [localSubmitted, setLocalSubmitted] = useState(false); // To update UI immediately before refresh
+
+  // Logic to determine if assignment is closed by Admin
+  const isAssignmentClosed = order.status === OrderStatus.COMPLETED || order.status === OrderStatus.APPROVED;
+  
+  // Logic to check if user has already submitted (either via prop or local state)
+  const hasSubmitted = !!existingSubmission || localSubmitted;
 
   const handleSubmitWork = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +45,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange, onSu
         const file = await uploadFile(submissionFile);
         const result = await submitAssignment(order.$id, user.$id, file.$id);
         
-        setSubmitted(true);
+        setLocalSubmitted(true);
         setSubmissionFile(null);
         
         // Notify parent to update UI instantly
@@ -111,10 +118,27 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, onStatusChange, onSu
       {role === UserRole.CLIENT && (
         <div className="pt-4 border-t border-gray-100 mt-auto">
             <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase">Submit Your Work</h4>
-            {submitted ? (
-                <div className="text-green-600 text-sm font-medium flex items-center bg-green-50 p-2 rounded-lg">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    Submitted Successfully
+            
+            {/* Logic Branch: Closed vs Submitted vs Available */}
+            {isAssignmentClosed ? (
+                <div className="text-gray-500 text-sm font-medium flex items-center bg-gray-100 p-2 rounded-lg">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    Assignment Closed
+                </div>
+            ) : hasSubmitted ? (
+                 <div className="text-green-600 text-sm font-medium flex flex-col items-start bg-green-50 p-3 rounded-lg border border-green-100">
+                    <div className="flex items-center mb-1">
+                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                         <span>You have submitted this work.</span>
+                    </div>
+                    {existingSubmission?.grade && (
+                        <div className="text-xs text-green-800 mt-1 font-bold pl-7">
+                            Grade: {existingSubmission.grade}
+                        </div>
+                    )}
+                     <div className="text-xs text-green-600 pl-7 opacity-75">
+                         Status: {existingSubmission?.status?.toUpperCase() || 'SUBMITTED'}
+                     </div>
                 </div>
             ) : (
                 <form onSubmit={handleSubmitWork} className="space-y-2">

@@ -65,21 +65,23 @@ const MOCK_ORDERS: Order[] = [
   }
 ];
 
-// const MOCK_SUBMISSIONS: Submission[] = [
-//     {
-//         $id: 'sub-1',
-//         $collectionId: 'submissions',
-//         $databaseId: 'db',
-//         $createdAt: new Date().toISOString(),
-//         $updatedAt: new Date().toISOString(),
-//         assignmentId: 'mock-3',
-//         studentId: 'user-1',
-//         fileId: 'mock-file-sub',
-//         submittedAt: new Date().toISOString(),
-//         status: 'graded',
-//         grade: 'A-'
-//     }
-// ];
+const MOCK_SUBMISSIONS: Submission[] = [
+    {
+        $id: 'sub-1',
+        $collectionId: 'submissions',
+        $databaseId: 'db',
+        $createdAt: new Date().toISOString(),
+        $updatedAt: new Date().toISOString(),
+        $permissions: [],
+        $sequence: 0,
+        assignmentId: 'mock-3',
+        studentId: 'user-1',
+        fileId: 'mock-file-sub',
+        submittedAt: new Date().toISOString(),
+        status: 'graded',
+        grade: 'A-'
+    }
+];
 
 // --- User Services ---
 
@@ -136,7 +138,7 @@ export const createOrder = async (
     );
   } catch (error) {
     console.warn("Create order failed (demo mode), returning mock.");
-    return {
+    const mockOrder = {
       $id: 'temp-mock-id-' + Date.now(),
       $collectionId: 'orders',
       $databaseId: 'db',
@@ -144,9 +146,15 @@ export const createOrder = async (
       $updatedAt: new Date().toISOString(),
       $permissions: [],
       $sequence: 0,
+      userId,
       ...data,
       status: OrderStatus.PENDING,
-    } as unknown as Models.Document;
+    } as unknown as Order;
+    
+    // Persist to mock data
+    MOCK_ORDERS.unshift(mockOrder);
+    
+    return mockOrder;
   }
 };
 
@@ -193,6 +201,11 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus) =>
     );
   } catch (error) {
     console.warn("Update status failed (demo mode).");
+    // Update mock data
+    const index = MOCK_ORDERS.findIndex(o => o.$id === orderId);
+    if (index !== -1) {
+        MOCK_ORDERS[index] = { ...MOCK_ORDERS[index], status };
+    }
     return null;
   }
 };
@@ -216,7 +229,27 @@ export const submitAssignment = async (assignmentId: string, studentId: string, 
         );
     } catch (error) {
         console.warn("Submission failed (demo mode).");
-        return { $id: 'mock-submission-id' };
+        const mockSubmission = {
+            $id: 'mock-submission-id-' + Date.now(),
+            $collectionId: 'submissions',
+            $databaseId: 'db',
+            $createdAt: new Date().toISOString(),
+            $updatedAt: new Date().toISOString(),
+            $permissions: [],
+            $sequence: 0,
+            assignmentId,
+            studentId,
+            fileId,
+            notes,
+            submittedAt: new Date().toISOString(),
+            status: 'submitted',
+            grade: ''
+        } as unknown as Submission;
+        
+        // Persist to mock data
+        MOCK_SUBMISSIONS.unshift(mockSubmission);
+        
+        return mockSubmission;
     }
 }
 
@@ -233,7 +266,7 @@ export const getUserSubmissions = async (userId: string): Promise<Submission[]> 
         return response.documents as unknown as Submission[];
     } catch (error) {
         console.warn("Fetch submissions failed (using demo data).");
-        // return MOCK_SUBMISSIONS;
+        return MOCK_SUBMISSIONS.filter(s => s.studentId === userId);
     }
 }
 
@@ -246,7 +279,7 @@ export const getAllSubmissions = async (): Promise<Submission[]> => {
         );
         return response.documents as unknown as Submission[];
     } catch (error) {
-        // return MOCK_SUBMISSIONS;
+        return MOCK_SUBMISSIONS;
     }
 };
 
@@ -260,6 +293,11 @@ export const updateSubmissionStatus = async (submissionId: string, status: strin
         );
     } catch (error) {
         console.warn("Update submission failed (demo mode)");
+        // Update mock data
+        const index = MOCK_SUBMISSIONS.findIndex(s => s.$id === submissionId);
+        if (index !== -1) {
+            MOCK_SUBMISSIONS[index] = { ...MOCK_SUBMISSIONS[index], status: status as any, grade };
+        }
         return null;
     }
 };

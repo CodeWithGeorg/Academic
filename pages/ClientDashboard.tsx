@@ -37,32 +37,34 @@ const ClientDashboard: React.FC = () => {
 
     // 1. Subscribe to Assignments (New homework posted)
     const unsubOrders = subscribeToCollection(APPWRITE_CONFIG.ORDERS_COLLECTION_ID, (payload) => {
-        if (payload.events.some((event: string) => event.includes('create'))) {
-            const newOrder = payload.payload as Order;
-            setOrders(prev => [newOrder, ...prev]);
-            showNotification("New Assignment Posted: " + newOrder.title);
-        }
-        if (payload.events.some((event: string) => event.includes('update'))) {
-            const updatedOrder = payload.payload as Order;
-            setOrders(prev => prev.map(o => o.$id === updatedOrder.$id ? updatedOrder : o));
+        const events = payload.events as string[];
+        const doc = payload.payload;
+
+        if (events.some(e => e.includes('.create'))) {
+            setOrders(prev => [doc, ...prev]);
+            showNotification("New Assignment Posted: " + doc.title);
+        } else if (events.some(e => e.includes('.update'))) {
+            setOrders(prev => prev.map(o => o.$id === doc.$id ? doc : o));
+        } else if (events.some(e => e.includes('.delete'))) {
+            setOrders(prev => prev.filter(o => o.$id !== doc.$id));
         }
     });
 
     // 2. Subscribe to Submissions (Grading updates AND new submissions)
     const unsubSubmissions = subscribeToCollection(APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID, (payload) => {
          const updatedSub = payload.payload as Submission;
+         const events = payload.events as string[];
          
          // Only care about MY submissions
          if (user && updatedSub.studentId === user.$id) {
-             if (payload.events.some((event: string) => event.includes('update'))) {
+             if (events.some(e => e.includes('.update'))) {
                  setSubmissions(prev => prev.map(s => s.$id === updatedSub.$id ? updatedSub : s));
                  
                  // Show notification if status changed or graded
                  if (updatedSub.status === 'graded' || updatedSub.status === 'approved') {
                      showNotification(`Your submission has been updated: ${updatedSub.status.toUpperCase()}`);
                  }
-             }
-             if (payload.events.some((event: string) => event.includes('create'))) {
+             } else if (events.some(e => e.includes('.create'))) {
                  // Check if already exists (prevent duplicate if manual handler fired first)
                  setSubmissions(prev => {
                      if (prev.find(s => s.$id === updatedSub.$id)) return prev;

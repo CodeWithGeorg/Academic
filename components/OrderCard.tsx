@@ -6,7 +6,7 @@ import Button from './Button';
 import { useAuth } from '../context/AuthContext';
 
 interface OrderCardProps {
-  order: Orders;
+  order: Order;
   role: UserRole | null;
   existingSubmission?: Submission; // New Prop
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;

@@ -102,7 +102,7 @@ export const getAllOrders = async (): Promise<Order[]> => {
         Query.limit(5000) // Increased limit to fetch all assignments
       ]
     );
-    // return response.documents as unknown as Order[];
+    return response.documents as unknown as Order[];
 };
 
 export const updateOrderStatus = async (orderId: string, status: OrderStatus) => {

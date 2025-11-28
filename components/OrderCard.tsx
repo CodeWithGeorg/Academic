@@ -73,7 +73,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, existingSubmission, 
       </div>
 
       <div className="space-y-3 mb-6 flex-grow">
-        <p className="text-gray-700 text-sm leading-relaxed">{order.description}</p>
+        <p className="text-purple-700 text-sm leading-relaxed">{order.description}</p>
         <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
             <span className="font-medium mr-2">Deadline:</span> {deadlineStr}
         </div>

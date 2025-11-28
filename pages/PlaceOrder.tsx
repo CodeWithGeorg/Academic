@@ -63,7 +63,7 @@ const PlaceOrder: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="bg-blue rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="bg-primary px-6 py-4">
             <h1 className="text-xl font-bold text-white">Create New Assignment</h1>
             <p className="text-indigo-100 text-sm">Post a new task for all students.</p>

@@ -9,7 +9,7 @@ import Signup from './pages/Signup';
 import ClientDashboard from './pages/ClientDashboard';
 import PlaceOrder from './pages/PlaceOrder';
 import AdminDashboard from './pages/AdminDashboard';
-import { UserRole } from './constants';
+// import { UserRole } from './constants';
 
 const App: React.FC = () => {
   return (

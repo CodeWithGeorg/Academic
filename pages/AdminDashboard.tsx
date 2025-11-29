@@ -48,7 +48,10 @@ const AdminDashboard: React.FC = () => {
         const doc = payload.payload;
 
         if (events.some(e => e.includes('.create'))) {
-            setList(prev => [doc, ...prev]);
+            setList(prev => {
+                if (prev.find(item => item.$id === doc.$id)) return prev;
+                return [doc, ...prev];
+            });
         } else if (events.some(e => e.includes('.update'))) {
             setList(prev => prev.map(item => item.$id === doc.$id ? doc : item));
         } else if (events.some(e => e.includes('.delete'))) {
@@ -90,7 +93,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleGradeSubmission = async (subId: string, newStatus: string, grade: string) => {
       try {
-          await updateSubmissionStatus(subId, newStatus, grade);
+          await updateSubmissionStatus(subId, newStatus as any, grade);
           // State updates automatically via Realtime, but we can optimistically update too
           setSubmissions(prev => prev.map(s => s.$id === subId ? { ...s, status: newStatus as any, grade } : s));
       } catch (e) {
@@ -351,7 +354,7 @@ const AdminDashboard: React.FC = () => {
                                                         <a 
                                                             href={getFileDownload(order.fileId)}
                                                             target="_blank" 
-                                                            rel="noreferrer"
+                                                            rel="noopener noreferrer"
                                                             className="text-primary hover:text-indigo-900 flex items-center"
                                                         >
                                                             Download
@@ -408,7 +411,7 @@ const AdminDashboard: React.FC = () => {
                                         <a 
                                             href={getFileDownload(sub.fileId)}
                                             target="_blank" 
-                                            rel="noreferrer"
+                                            rel="noopener noreferrer"
                                             className="text-primary font-medium hover:underline"
                                         >
                                             View Work

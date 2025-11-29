@@ -41,7 +41,11 @@ const ClientDashboard: React.FC = () => {
         const doc = payload.payload;
 
         if (events.some(e => e.includes('.create'))) {
-            setOrders(prev => [doc, ...prev]);
+            setOrders(prev => {
+                // Prevent duplicate if already exists
+                if (prev.find(o => o.$id === doc.$id)) return prev;
+                return [doc, ...prev];
+            });
             showNotification("New Assignment Posted: " + doc.title);
         } else if (events.some(e => e.includes('.update'))) {
             setOrders(prev => prev.map(o => o.$id === doc.$id ? doc : o));

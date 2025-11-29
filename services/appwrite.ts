@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Storage, ID, Query, Models } from 'appwrite';
+import { Client, Account, Databases, Storage, ID, Query, Models, Permission, Role as AppwriteRole } from 'appwrite';
 import { APPWRITE_CONFIG, OrderStatus, UserRole } from '../constants';
 import { Order, UserProfile, Submission } from '../types';
 
@@ -66,16 +66,29 @@ export const createOrder = async (
   userId: string,
   data: { title: string; description: string; deadline: string; fileId?: string }
 ) => {
+    // Ensure undefined fileId isn't passed to the API
+    const payload = {
+        userId,
+        title: data.title,
+        description: data.description,
+        deadline: data.deadline,
+        status: OrderStatus.PENDING,
+        createdAt: new Date().toISOString(),
+        ...(data.fileId ? { fileId: data.fileId } : {})
+    };
+
+    // Explicitly set permissions so ALL users can read, but only Creator (Admin) can edit/delete
     return await databases.createDocument(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       ID.unique(),
-      {
-        userId,
-        ...data,
-        status: OrderStatus.PENDING,
-        createdAt: new Date().toISOString(),
-      }
+      payload,
+      [
+        Permission.read(AppwriteRole.users()),      // Critical: Allows all logged-in students to see the assignment
+        Permission.read(AppwriteRole.user(userId)), // Creator can read
+        Permission.update(AppwriteRole.user(userId)), // Creator can update
+        Permission.delete(AppwriteRole.user(userId)), // Creator can delete
+      ]
     );
 };
 
@@ -86,7 +99,7 @@ export const getClientOrders = async (userId: string): Promise<Order[]> => {
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [
-          Query.orderDesc('$createdAt'),
+          Query.orderDesc('createdAt'), // Using custom createdAt to match README index
           Query.limit(1000) // Ensure students see all active assignments
       ]
     );
@@ -98,7 +111,7 @@ export const getAllOrders = async (): Promise<Order[]> => {
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [
-        Query.orderDesc('$createdAt'),
+        Query.orderDesc('createdAt'), // Using custom createdAt to match README index
         Query.limit(5000) // Increased limit to fetch all assignments
       ]
     );
@@ -143,7 +156,7 @@ export const getUserSubmissions = async (userId: string): Promise<Submission[]> 
         ]
     );
     return response.documents as unknown as Submission[];
-}
+};
 
 export const getAllSubmissions = async (): Promise<Submission[]> => {
     const response = await databases.listDocuments(
@@ -157,7 +170,7 @@ export const getAllSubmissions = async (): Promise<Submission[]> => {
     return response.documents as unknown as Submission[];
 };
 
-export const updateSubmissionStatus = async (submissionId: string, status: string, grade?: string) => {
+export const updateSubmissionStatus = async (submissionId: string, status: 'submitted' | 'approved' | 'rejected' | 'graded', grade?: string) => {
     return await databases.updateDocument(
         APPWRITE_CONFIG.DATABASE_ID,
         APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,

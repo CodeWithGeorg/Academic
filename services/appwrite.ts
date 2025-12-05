@@ -1,6 +1,7 @@
+
 import { Client, Account, Databases, Storage, ID, Query, Models, Permission, Role as AppwriteRole } from 'appwrite';
 import { APPWRITE_CONFIG, OrderStatus, UserRole } from '../constants';
-import { Order, UserProfile, Submission } from '../types';
+import { Order, UserProfile, Submission, Message } from '../types';
 
 const client = new Client()
   .setEndpoint(APPWRITE_CONFIG.ENDPOINT)
@@ -54,7 +55,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
         APPWRITE_CONFIG.USERS_COLLECTION_ID,
         [
             Query.orderDesc('createdAt'), 
-            Query.limit(5000) // Increased limit to fetch all users
+            Query.limit(5000) 
         ]
     );
     return response.documents as unknown as UserProfile[];
@@ -84,23 +85,22 @@ export const createOrder = async (
       ID.unique(),
       payload,
       [
-        Permission.read(AppwriteRole.users()),      // Critical: Allows all logged-in students to see the assignment
-        Permission.read(AppwriteRole.user(userId)), // Creator can read
-        Permission.update(AppwriteRole.user(userId)), // Creator can update
-        Permission.delete(AppwriteRole.user(userId)), // Creator can delete
+        Permission.read(AppwriteRole.users()),      
+        Permission.read(AppwriteRole.user(userId)), 
+        Permission.update(AppwriteRole.user(userId)), 
+        Permission.delete(AppwriteRole.user(userId)), 
       ]
     );
 };
 
-// Fetch ALL Assignments for the students
 export const getClientOrders = async (userId: string): Promise<Order[]> => {
     // We ignore userId here because assignments are public to all students
     const response = await databases.listDocuments(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [
-          Query.orderDesc('createdAt'), // Using custom createdAt to match README index
-          Query.limit(1000) // Ensure students see all active assignments
+          Query.orderDesc('createdAt'),
+          Query.limit(1000) 
       ]
     );
     return response.documents as unknown as Order[];
@@ -111,8 +111,8 @@ export const getAllOrders = async (): Promise<Order[]> => {
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [
-        Query.orderDesc('createdAt'), // Using custom createdAt to match README index
-        Query.limit(5000) // Increased limit to fetch all assignments
+        Query.orderDesc('createdAt'), 
+        Query.limit(5000) 
       ]
     );
     return response.documents as unknown as Order[];
@@ -164,7 +164,7 @@ export const getAllSubmissions = async (): Promise<Submission[]> => {
         APPWRITE_CONFIG.SUBMISSIONS_COLLECTION_ID,
         [
             Query.orderDesc('submittedAt'), 
-            Query.limit(5000) // Increased limit to fetch all submissions
+            Query.limit(5000) 
         ]
     );
     return response.documents as unknown as Submission[];
@@ -178,6 +178,36 @@ export const updateSubmissionStatus = async (submissionId: string, status: 'subm
         { status, grade }
     );
 };
+
+// --- Message Services (Contact) ---
+
+export const createMessage = async (senderId: string, senderName: string, subject: string, content: string) => {
+    return await databases.createDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.MESSAGES_COLLECTION_ID,
+        ID.unique(),
+        {
+            senderId,
+            senderName,
+            subject,
+            content,
+            sentAt: new Date().toISOString()
+        }
+    );
+}
+
+export const getAllMessages = async (): Promise<Message[]> => {
+     const response = await databases.listDocuments(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.MESSAGES_COLLECTION_ID,
+        [
+            Query.orderDesc('sentAt'),
+            Query.limit(500)
+        ]
+    );
+    return response.documents as unknown as Message[];
+}
+
 
 // --- File Services ---
 

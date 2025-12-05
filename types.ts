@@ -44,8 +44,22 @@ export interface Submission extends Models.Document {
   $sequence: number;
 }
 
+export interface Message extends Models.Document {
+    senderId: string;
+    senderName: string;
+    subject: string;
+    content: string;
+    sentAt: string;
+    $id: string;
+    $collectionId: string;
+    $databaseId: string;
+    $createdAt: string;
+    $updatedAt: string;
+    $permissions: string[];
+    $sequence: number;
+}
+
 export interface OrderStats {
   name: string;
   value: number;
 }
-

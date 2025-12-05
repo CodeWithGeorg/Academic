@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -41,7 +42,10 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 {role === UserRole.CLIENT && (
-                  <Link to="/dashboard" className={isActive('/dashboard')}>Assignments</Link>
+                  <>
+                    <Link to="/dashboard" className={isActive('/dashboard')}>Assignments</Link>
+                    <Link to="/contact" className={isActive('/contact')}>Contact Admin</Link>
+                  </>
                 )}
                 
                 {role === UserRole.ADMIN && (

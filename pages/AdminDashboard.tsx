@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
-import { getAllOrders, updateOrderStatus, getFileDownload, getAllSubmissions, updateSubmissionStatus, subscribeToCollection, getAllUsers } from '../services/appwrite';
-import { Order, Submission, UserProfile } from '../types';
+import { getAllOrders, updateOrderStatus, getFileDownload, getAllSubmissions, updateSubmissionStatus, subscribeToCollection, getAllUsers, getAllMessages } from '../services/appwrite';
+import { Order, Submission, UserProfile, Message } from '../types';
 import { OrderStatus, APPWRITE_CONFIG, UserRole } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import OrderCard from '../components/OrderCard';
@@ -14,24 +15,27 @@ const AdminDashboard: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   
   // UI States
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'assignments' | 'submissions' | 'students'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'submissions' | 'students' | 'requests'>('assignments');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
   const fetchData = async () => {
     try {
-      const [ordersData, submissionsData, usersData] = await Promise.all([
+      const [ordersData, submissionsData, usersData, messagesData] = await Promise.all([
         getAllOrders(),
         getAllSubmissions(),
-        getAllUsers()
+        getAllUsers(),
+        getAllMessages()
       ]);
       setOrders(ordersData);
       setSubmissions(submissionsData);
       setUsers(usersData);
+      setMessages(messagesData);
     } catch (error) {
       console.error("Admin fetch error", error);
     } finally {
@@ -74,10 +78,16 @@ const AdminDashboard: React.FC = () => {
          handleRealtime(payload, setUsers);
     });
 
+    // 4. Subscribe to Messages
+    const unsubMessages = subscribeToCollection(APPWRITE_CONFIG.MESSAGES_COLLECTION_ID, (payload) => {
+         handleRealtime(payload, setMessages);
+    });
+
     return () => {
         unsubOrders();
         unsubSubmissions();
         unsubUsers();
+        unsubMessages();
     }
   }, []);
 
@@ -194,6 +204,16 @@ const AdminDashboard: React.FC = () => {
             }`}
         >
             Students ({users.filter(u => u.role === UserRole.CLIENT).length})
+        </button>
+        <button
+            onClick={() => setActiveTab('requests')}
+            className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'requests' 
+                ? 'border-primary text-primary' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+        >
+            Requests ({messages.length})
         </button>
       </div>
 
@@ -499,6 +519,34 @@ const AdminDashboard: React.FC = () => {
                   </table>
               </div>
           </div>
+      )}
+
+      {activeTab === 'requests' && (
+          /* --- Requests (Messages) Tab --- */
+           <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+              {messages.length === 0 ? (
+                  <div className="p-10 text-center text-gray-500">
+                      No messages from students yet.
+                  </div>
+              ) : (
+                  <div className="divide-y divide-gray-200">
+                      {messages.map((msg) => (
+                          <div key={msg.$id} className="p-6 hover:bg-gray-50 transition-colors">
+                              <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                      <h3 className="text-md font-bold text-gray-900">{msg.subject}</h3>
+                                      <p className="text-sm text-gray-500">From: <span className="font-medium text-gray-700">{msg.senderName}</span></p>
+                                  </div>
+                                  <span className="text-xs text-gray-400">{new Date(msg.sentAt).toLocaleDateString()}</span>
+                              </div>
+                              <p className="text-gray-700 text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                  {msg.content}
+                              </p>
+                          </div>
+                      ))}
+                  </div>
+              )}
+           </div>
       )}
     </div>
   );

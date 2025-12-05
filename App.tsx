@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -9,6 +10,7 @@ import Signup from './pages/Signup';
 import ClientDashboard from './pages/ClientDashboard';
 import PlaceOrder from './pages/PlaceOrder';
 import AdminDashboard from './pages/AdminDashboard';
+import Contact from './pages/Contact';
 import { UserRole } from './constants';
 
 const App: React.FC = () => {
@@ -27,6 +29,7 @@ const App: React.FC = () => {
               {/* Client & Admin Shared Routes */}
               <Route element={<PrivateRoute allowedRoles={[UserRole.CLIENT, UserRole.ADMIN]} />}>
                 <Route path="/dashboard" element={<ClientDashboard />} />
+                <Route path="/contact" element={<Contact />} />
               </Route>
 
               {/* Admin Routes */}

@@ -43,7 +43,7 @@ const Contact: React.FC = () => {
               <div className="bg-green-100 text-green-800 p-8 rounded-full mb-4">
                   <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Message Sent!</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Message Sent! Successfully</h2>
               <p className="text-gray-600 mt-2">The admin will review your request shortly.</p>
           </div>
       );

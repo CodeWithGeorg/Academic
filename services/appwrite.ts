@@ -73,7 +73,7 @@ export const createOrder = async (
         title: data.title,
         description: data.description,
         deadline: data.deadline,
-        status: OrderStatus.COMPLETED,
+        status: OrderStatus.PENDING,
         createdAt: new Date().toISOString(),
         ...(data.fileId ? { fileId: data.fileId } : {})
     };

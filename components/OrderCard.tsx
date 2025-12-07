@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Order, Submission } from '../types';
 import { OrderStatus, UserRole } from '../constants';
@@ -8,7 +9,8 @@ import { useAuth } from '../context/AuthContext';
 interface OrderCardProps {
   order: Order;
   role: UserRole | null;
-  existingSubmission?: Submission; // New Prop
+  existingSubmission?: Submission;
+  isNew?: boolean; // New Prop
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
   onSubmissionSuccess?: (submission: Submission) => void;
 }
@@ -21,14 +23,14 @@ const statusColors: Record<OrderStatus, string> = {
   [OrderStatus.APPROVED]: 'bg-purple-100 text-purple-800',
 };
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, role, existingSubmission, onStatusChange, onSubmissionSuccess }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, role, existingSubmission, isNew, onStatusChange, onSubmissionSuccess }) => {
   const { user } = useAuth();
   const dateStr = new Date(order.$createdAt).toLocaleDateString();
   const deadlineStr = new Date(order.deadline).toLocaleDateString();
   
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [localSubmitted, setLocalSubmitted] = useState(false); // To update UI immediately before refresh
+  const [localSubmitted, setLocalSubmitted] = useState(false);
 
   // Logic to determine if assignment is closed by Admin
   const isAssignmentClosed = order.status === OrderStatus.COMPLETED || order.status === OrderStatus.APPROVED;
@@ -61,19 +63,27 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, existingSubmission, 
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow flex flex-col h-full">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow flex flex-col h-full relative">
+      {isNew && (
+        <span className="absolute top-4 right-4 animate-pulse inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 shadow-sm z-10">
+           NEW
+        </span>
+      )}
+
       <div className="flex justify-between items-start mb-4">
         <div className="pr-4">
           <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{order.title}</h3>
           <p className="text-sm text-gray-500">Posted on {dateStr}</p>
         </div>
-        <span className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${statusColors[order.status]}`}>
-          {order.status}
-        </span>
+        {!isNew && (
+          <span className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${statusColors[order.status]}`}>
+            {order.status}
+          </span>
+        )}
       </div>
 
       <div className="space-y-3 mb-6 flex-grow">
-        <p className="text-purple-700 text-sm leading-relaxed">{order.description}</p>
+        <p className="text-gray-700 text-sm leading-relaxed">{order.description}</p>
         <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-md">
             <span className="font-medium mr-2">Deadline:</span> {deadlineStr}
         </div>
@@ -84,7 +94,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, role, existingSubmission, 
                  <a 
                     href={getFileDownload(order.fileId)}
                     target="_blank" 
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center text-sm text-primary hover:underline"
                 >
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

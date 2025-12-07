@@ -3,9 +3,21 @@ import { Client, Account, Databases, Storage, ID, Query, Models, Permission, Rol
 import { APPWRITE_CONFIG, OrderStatus, UserRole } from '../constants';
 import { Order, UserProfile, Submission, Message } from '../types';
 
-const client = new Client()
-  .setEndpoint(APPWRITE_CONFIG.ENDPOINT)
-  .setProject(APPWRITE_CONFIG.PROJECT_ID);
+// Validation: Check if Project ID is set
+if (!APPWRITE_CONFIG.PROJECT_ID) {
+    console.error("ERROR: Appwrite Project ID is missing. Please check your .env file and ensure VITE_APPWRITE_PROJECT_ID is set.");
+}
+
+// Initialize Client with fallback to avoid immediate crash if config is missing
+const client = new Client();
+
+if (APPWRITE_CONFIG.ENDPOINT) {
+    client.setEndpoint(APPWRITE_CONFIG.ENDPOINT);
+}
+
+if (APPWRITE_CONFIG.PROJECT_ID) {
+    client.setProject(APPWRITE_CONFIG.PROJECT_ID);
+}
 
 export const account = new Account(client);
 export const databases = new Databases(client);
@@ -16,7 +28,11 @@ export const uniqueId = () => ID.unique();
 
 // Helper for Realtime Subscriptions
 export const subscribeToCollection = (collectionId: string, callback: (payload: any) => void) => {
-  return client.subscribe(`databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${collectionId}.documents`, callback);
+    if (!APPWRITE_CONFIG.DATABASE_ID || !collectionId) {
+        console.warn("Skipping subscription: Missing Database ID or Collection ID");
+        return () => {};
+    }
+    return client.subscribe(`databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${collectionId}.documents`, callback);
 };
 
 // --- User Services ---

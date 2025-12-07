@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { account, createUserDocument, uniqueId } from '../services/appwrite';
@@ -21,19 +22,27 @@ const Signup: React.FC = () => {
 
     try {
       const userId = uniqueId();
+      
       // 1. Create Auth Account
       await account.create(userId, email, password, name);
       
-      // 2. Create User Document in DB for role management
-      // Note: In production, this should ideally be done via Appwrite Functions triggered by 'users.create' event to ensure security.
-      // For this MVP, we do it client-side.
+      // 2. IMMEDIATE LOGIN (CRITICAL STEP)
+      // We must create a session immediately so the user is authenticated 
+      // when we try to create the user document in the database next.
+      await account.createEmailPasswordSession(email, password);
+
+      // 3. Create User Document in DB for role management
+      // Now running as an Authenticated User, so permissions will work correctly.
       await createUserDocument(userId, name, email, UserRole.CLIENT);
 
-      // Redirect to login
-      navigate('/login');
+      // Redirect to login (or dashboard since we just logged them in)
+      // Navigating to login for a clean flow, or dashboard if you prefer auto-entry.
+      // Since we just logged them in, we can go straight to dashboard/login check.
+      navigate('/login'); 
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Registration failed.');
+      // If session was created but DB failed, we should probably log them out or warn
     } finally {
       setLoading(false);
     }

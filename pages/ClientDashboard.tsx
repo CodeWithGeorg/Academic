@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getClientOrders, getUserSubmissions, subscribeToCollection, getFileDownload } from '../services/appwrite';
@@ -44,9 +45,9 @@ const ClientDashboard: React.FC = () => {
             setOrders(prev => {
                 // Prevent duplicate if already exists
                 if (prev.find(o => o.$id === doc.$id)) return prev;
+                showNotification("New Assignment Posted: " + doc.title);
                 return [doc, ...prev];
             });
-            showNotification("New Assignment Posted: " + doc.title);
         } else if (events.some(e => e.includes('.update'))) {
             setOrders(prev => prev.map(o => o.$id === doc.$id ? doc : o));
         } else if (events.some(e => e.includes('.delete'))) {
@@ -102,6 +103,14 @@ const ClientDashboard: React.FC = () => {
   const getAssignmentTitle = (assignmentId: string) => {
       const found = orders.find(o => o.$id === assignmentId);
       return found ? found.title : 'Unknown Assignment';
+  };
+
+  // Helper to check if assignment is new (created < 24 hours ago)
+  const isRecent = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    return diff < 24 * 60 * 60 * 1000; // 24 hours in milliseconds
   };
 
   if (loading) {
@@ -178,6 +187,7 @@ const ClientDashboard: React.FC = () => {
                     order={order} 
                     role={role} 
                     existingSubmission={userSubmission} // Pass existing submission
+                    isNew={isRecent(order.$createdAt)} // Flag new items
                     onSubmissionSuccess={handleManualSubmission}
                   />
                 );

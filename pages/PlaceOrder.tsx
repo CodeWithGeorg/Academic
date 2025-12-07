@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -45,14 +46,15 @@ const PlaceOrder: React.FC = () => {
       }
 
       // 2. Create Order (Assignment)
-      await createOrder(user.$id, {
+      const newOrder = await createOrder(user.$id, {
         title,
         description,
         deadline,
         fileId,
       });
 
-      navigate('/admin');
+      // Pass the new order in state to display immediately
+      navigate('/admin', { state: { newOrder } });
     } catch (err: any) {
       console.error(err);
       setError('Failed to create assignment. Please try again.');
@@ -63,7 +65,7 @@ const PlaceOrder: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="bg-blue rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="bg-primary px-6 py-4">
             <h1 className="text-xl font-bold text-white">Create New Assignment</h1>
             <p className="text-indigo-100 text-sm">Post a new task for all students.</p>

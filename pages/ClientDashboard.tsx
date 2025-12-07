@@ -20,8 +20,9 @@ const ClientDashboard: React.FC = () => {
     const fetchData = async () => {
       if (user) {
         try {
+          // Fetch assignments (no arg needed) and user submissions
           const [assignmentsData, submissionsData] = await Promise.all([
-             getClientOrders(user.$id),
+             getClientOrders(),
              getUserSubmissions(user.$id)
           ]);
           setOrders(assignmentsData);

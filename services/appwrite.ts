@@ -3,9 +3,9 @@ import { Client, Account, Databases, Storage, ID, Query, Models, Permission, Rol
 import { APPWRITE_CONFIG, OrderStatus, UserRole } from '../constants';
 import { Order, UserProfile, Submission, Message } from '../types';
 
-// Validation: Check if Project ID is set
+// Validation: Warn if Project ID is set
 if (!APPWRITE_CONFIG.PROJECT_ID) {
-    console.error("ERROR: Appwrite Project ID is missing. Please check your .env file and ensure VITE_APPWRITE_PROJECT_ID is set.");
+    console.warn("WARN: Appwrite Project ID is missing. The app will load, but API calls will fail. Check .env if this is unintentional.");
 }
 
 // Initialize Client with fallback to avoid immediate crash if config is missing
@@ -109,14 +109,15 @@ export const createOrder = async (
     );
 };
 
-export const getClientOrders = async (userId: string): Promise<Order[]> => {
-    // We ignore userId here because assignments are public to all students
+export const getClientOrders = async (): Promise<Order[]> => {
+    // Fetch all assignments available to students
+    // Limit increased to 5000 to match Admin dashboard and show all items
     const response = await databases.listDocuments(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.ORDERS_COLLECTION_ID,
       [
           Query.orderDesc('createdAt'),
-          Query.limit(1000) 
+          Query.limit(5000) 
       ]
     );
     return response.documents as unknown as Order[];

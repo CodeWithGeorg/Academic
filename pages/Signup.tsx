@@ -22,86 +22,100 @@ const Signup: React.FC = () => {
 
     try {
       const userId = uniqueId();
-      
-      // 1. Create Auth Account
       await account.create(userId, email, password, name);
-      
-      // 2. IMMEDIATE LOGIN (CRITICAL STEP)
-      // We must create a session immediately so the user is authenticated 
-      // when we try to create the user document in the database next.
       await account.createEmailPasswordSession(email, password);
-
-      // 3. Create User Document in DB for role management
-      // Now running as an Authenticated User, so permissions will work correctly.
       await createUserDocument(userId, name, email, UserRole.CLIENT);
-
-      // Redirect to login (or dashboard since we just logged them in)
-      // Navigating to login for a clean flow, or dashboard if you prefer auto-entry.
-      // Since we just logged them in, we can go straight to dashboard/login check.
       navigate('/login'); 
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Registration failed.');
-      // If session was created but DB failed, we should probably log them out or warn
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-primary hover:text-indigo-500">
-              Log in
-            </Link>
-          </p>
+    <div className="flex min-h-[calc(100vh-64px)] bg-white">
+      {/* Right Side - Image (Flipped for Signup) */}
+      <div className="hidden lg:block relative w-0 flex-1 order-2">
+        <img
+          className="absolute inset-0 h-full w-full object-cover"
+          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop"
+          alt="Students studying together"
+        />
+        <div className="absolute inset-0 bg-indigo-900 mix-blend-multiply opacity-40"></div>
+        <div className="absolute bottom-0 left-0 p-20 text-white">
+            <h3 className="text-4xl font-bold mb-4">Start Your Journey</h3>
+            <p className="text-xl text-indigo-100 max-w-md">Create an account today to access assignments, grades, and communicate with your instructors.</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm text-center">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
-             <Input
-              id="name"
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              label="Full Name"
-            />
-            <Input
-              id="email"
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              label="Email"
-            />
-            <Input
-              id="password"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              label="Password"
-            />
+      </div>
+
+      {/* Left Side - Form */}
+      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 order-1">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          <div>
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Create an account
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-primary hover:text-indigo-500">
+                Log in
+              </Link>
+            </p>
           </div>
 
-          <Button type="submit" className="w-full" isLoading={loading}>
-            Sign Up
-          </Button>
-        </form>
+          <div className="mt-8">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {error && (
+                <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm text-center border border-red-100">
+                  {error}
+                </div>
+              )}
+              
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                label="Full Name"
+                className="bg-gray-50 border-gray-300 focus:bg-white"
+              />
+
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                label="Email address"
+                className="bg-gray-50 border-gray-300 focus:bg-white"
+              />
+              
+              <Input
+                id="password"
+                type="password"
+                placeholder="Min 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                label="Password"
+                className="bg-gray-50 border-gray-300 focus:bg-white"
+              />
+
+              <Button type="submit" className="w-full shadow-lg shadow-indigo-500/30" isLoading={loading}>
+                Sign Up
+              </Button>
+              
+              <p className="text-xs text-center text-gray-500 mt-4">
+                  By clicking "Sign Up", you agree to our Terms of Service and Privacy Policy.
+              </p>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

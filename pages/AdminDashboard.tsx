@@ -7,9 +7,11 @@ import { useAuth } from '../context/AuthContext';
 import OrderCard from '../components/OrderCard';
 import Input from '../components/Input';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useLocation } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
   const { role } = useAuth();
+  const location = useLocation();
   
   // Data States
   const [orders, setOrders] = useState<Order[]>([]);
@@ -44,6 +46,17 @@ const AdminDashboard: React.FC = () => {
   };
 
   useEffect(() => {
+    // Optimistically update if coming from creation page
+    if (location.state && location.state.newOrder) {
+        const newOrder = location.state.newOrder as Order;
+        setOrders(prev => {
+            if (prev.find(o => o.$id === newOrder.$id)) return prev;
+            return [newOrder, ...prev];
+        });
+        // Clear history state to prevent duplicates on refresh/back
+        window.history.replaceState({}, '');
+    }
+
     fetchData();
 
     // Helper to handle real-time updates for any list
@@ -89,7 +102,7 @@ const AdminDashboard: React.FC = () => {
         unsubUsers();
         unsubMessages();
     }
-  }, []);
+  }, [location.state]); // Add location.state to dependency
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {

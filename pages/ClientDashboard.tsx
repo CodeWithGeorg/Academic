@@ -16,22 +16,25 @@ const ClientDashboard: React.FC = () => {
   // Notification State
   const [notification, setNotification] = useState<{message: string, show: boolean}>({ message: '', show: false });
 
-  useEffect(() => {
+   useEffect(() => {
     const fetchData = async () => {
       if (user) {
-        try {
-          // Fetch assignments (no arg needed) and user submissions
-          const [assignmentsData, submissionsData] = await Promise.all([
-             getClientOrders(),
-             getUserSubmissions(user.$id)
-          ]);
-          setOrders(assignmentsData);
-          setSubmissions(submissionsData);
-        } catch (error) {
-          console.error("Failed to fetch dashboard data", error);
-        } finally {
-          setLoading(false);
-        }
+        const fetchAssignments = async () => {
+             try {
+                 const data = await getClientOrders();
+                 setOrders(data);
+             } catch (e) { console.error("Error fetching client assignments", e); }
+        };
+
+        const fetchUserSubmissions = async () => {
+             try {
+                 const data = await getUserSubmissions(user.$id);
+                 setSubmissions(data);
+             } catch (e) { console.error("Error fetching user submissions", e); }
+        };
+        
+        await Promise.allSettled([fetchAssignments(), fetchUserSubmissions()]);
+        setLoading(false);
       }
     };
 

@@ -26,23 +26,44 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
-  const fetchData = async () => {
-    try {
-      const [ordersData, submissionsData, usersData, messagesData] = await Promise.all([
-        getAllOrders(),
-        getAllSubmissions(),
-        getAllUsers(),
-        getAllMessages()
-      ]);
-      setOrders(ordersData);
-      setSubmissions(submissionsData);
-      setUsers(usersData);
-      setMessages(messagesData);
-    } catch (error) {
-      console.error("Admin fetch error", error);
-    } finally {
-      setLoading(false);
-    }
+ const fetchData = async () => {
+    // Independent fetch calls so one failure doesn't break the entire dashboard
+    const fetchOrders = async () => {
+        try {
+            const data = await getAllOrders();
+            setOrders(data);
+        } catch (e) { console.error("Failed to fetch orders", e); }
+    };
+
+    const fetchSubmissions = async () => {
+        try {
+            const data = await getAllSubmissions();
+            setSubmissions(data);
+        } catch (e) { console.error("Failed to fetch submissions", e); }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const data = await getAllUsers();
+            setUsers(data);
+        } catch (e) { console.error("Failed to fetch users", e); }
+    };
+
+    const fetchMessages = async () => {
+        try {
+            const data = await getAllMessages();
+            setMessages(data);
+        } catch (e) { console.error("Failed to fetch messages", e); }
+    };
+
+    await Promise.allSettled([
+        fetchOrders(),
+        fetchSubmissions(),
+        fetchUsers(),
+        fetchMessages()
+    ]);
+    
+    setLoading(false);
   };
 
   useEffect(() => {

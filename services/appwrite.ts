@@ -219,7 +219,7 @@ export const getAllMessages = async (): Promise<Message[]> => {
         APPWRITE_CONFIG.MESSAGES_COLLECTION_ID,
         [
             Query.orderDesc('sentAt'),
-            Query.limit(500)
+            Query.limit(5000)
         ]
     );
     return response.documents as unknown as Message[];

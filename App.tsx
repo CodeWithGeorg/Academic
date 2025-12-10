@@ -11,6 +11,9 @@ import ClientDashboard from './pages/ClientDashboard';
 import PlaceOrder from './pages/PlaceOrder';
 import AdminDashboard from './pages/AdminDashboard';
 import Contact from './pages/Contact';
+import ContactPublic from './pages/ContactPublic';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import { UserRole } from './constants';
 
 const App: React.FC = () => {
@@ -25,6 +28,9 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+           <Route path="privacy" element={<PrivacyPolicy />} />
+           <Route path="terms" element={<TermsOfService />} />
+           <Route path="contact-us" element={<ContactPublic />} />
 
             {/* Client & Admin Shared Routes */}
             <Route element={<PrivateRoute allowedRoles={[UserRole.CLIENT, UserRole.ADMIN]} />}>

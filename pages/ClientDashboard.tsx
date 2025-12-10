@@ -16,7 +16,7 @@ const ClientDashboard: React.FC = () => {
   // Notification State
   const [notification, setNotification] = useState<{message: string, show: boolean}>({ message: '', show: false });
 
-   useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       if (user) {
         const fetchAssignments = async () => {
@@ -146,10 +146,10 @@ const ClientDashboard: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b border-gray-200 mb-6">
+      <div className="flex space-x-4 border-b border-gray-200 mb-6 overflow-x-auto">
         <button
             onClick={() => setActiveTab('assignments')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'assignments' 
                 ? 'border-primary text-primary' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -159,7 +159,7 @@ const ClientDashboard: React.FC = () => {
         </button>
         <button
             onClick={() => setActiveTab('submissions')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'submissions' 
                 ? 'border-primary text-primary' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

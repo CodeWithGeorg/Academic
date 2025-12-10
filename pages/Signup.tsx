@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { account, createUserDocument, uniqueId } from '../services/appwrite';
+import { useAuth } from '@/context/AuthContext';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { UserRole } from '../constants';
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const { checkUserStatus } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,10 +24,20 @@ const Signup: React.FC = () => {
 
     try {
       const userId = uniqueId();
+      // 1. Create the Appwrite Account
       await account.create(userId, email, password, name);
+      
+      // 2. Create the Session (Login immediately)
       await account.createEmailPasswordSession(email, password);
+      
+      // 3. Create the User Profile in Database
       await createUserDocument(userId, name, email, UserRole.CLIENT);
-      navigate('/login'); 
+      
+      // 4. Update Auth Context
+      await checkUserStatus();
+      
+      // 5. Redirect to Client Dashboard
+      navigate('/dashboard'); 
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Registration failed.');

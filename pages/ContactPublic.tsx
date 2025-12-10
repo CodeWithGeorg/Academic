@@ -23,7 +23,7 @@ const ContactPublic: React.FC = () => {
                 </svg>
               </div>
               <div className="ml-3 text-base text-gray-500">
-                <p>+1 (555) 123-4567</p>
+                <p>+254787052272</p>
                 <p className="mt-1">Mon-Fri 8am to 6pm PST</p>
               </div>
             </div>

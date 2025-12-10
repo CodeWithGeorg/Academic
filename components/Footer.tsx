@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -10,16 +11,16 @@ const Footer: React.FC = () => {
             <span className="sr-only">Home</span>
             Home
           </Link>
-          <Link to="/contact" className="text-gray-400 hover:text-gray-500">
+          <Link to="/contact-us" className="text-gray-400 hover:text-gray-500">
             <span className="sr-only">Contact</span>
-            Contact Support
+            Contact Us
           </Link>
-          <span className="text-gray-400">
+          <Link to="/privacy" className="text-gray-400 hover:text-gray-500">
             Privacy Policy
-          </span>
-          <span className="text-gray-400">
+          </Link>
+          <Link to="/terms" className="text-gray-400 hover:text-gray-500">
             Terms
-          </span>
+          </Link>
         </div>
         <div className="mt-8 md:mt-0 md:order-1">
           <p className="text-center text-base text-gray-400">

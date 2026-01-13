@@ -58,19 +58,21 @@ const ContactPublic: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                  <h3 className="font-bold text-gray-900">North America</h3>
+                  <h3 className="font-bold text-gray-900">Meru Kenya</h3>
                   <p className="mt-2 text-sm text-gray-500">
-                      500 Howard Street<br />
-                      San Francisco, CA 94105<br />
-                      United States
+                      456 Academic Rd.<br />
+                      Meru Town, Kenya<br />
+                      P.O. Box 1234-60200<br />
+                      Meru, Kenya
                   </p>
               </div>
                <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                  <h3 className="font-bold text-gray-900">Europe</h3>
+                  <h3 className="font-bold text-gray-900">Nairobi</h3>
                   <p className="mt-2 text-sm text-gray-500">
-                      10 Downing Street<br />
-                      London, SW1A 2AA<br />
-                      United Kingdom
+                      789 Learning St.<br />
+                      Nairobi, Kenya<br />
+                      P.O. Box 5678-00100<br />
+                      Nairobi, Kenya
                   </p>
               </div>
           </div>

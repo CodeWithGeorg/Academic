@@ -26,9 +26,6 @@ const Footer: React.FC = () => {
           <p className="text-center text-base text-gray-400">
             &copy; {new Date().getFullYear()} AcademicFlow Platform. All rights reserved.
           </p>
-          <p className="text-center text-xs text-gray-300 mt-1">
-            Powered by Appwrite Backend Services
-          </p>
         </div>
       </div>
     </footer>

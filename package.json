@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
+    "appwrite": "^21.4.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
-    "recharts": "^3.5.0",
-    "appwrite": "^21.4.0"
+    "recharts": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

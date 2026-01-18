@@ -21,10 +21,10 @@ const App: React.FC = () => {
     <AuthProvider>
       <HashRouter>
         <Routes>
-          {/* Wrap all routes in the MainLayout */}
+          
           <Route element={<MainLayout />}>
             
-            {/* Public Routes */}
+            
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -32,13 +32,12 @@ const App: React.FC = () => {
            <Route path="terms" element={<TermsOfService />} />
            <Route path="contact-us" element={<ContactPublic />} />
 
-            {/* Client & Admin Shared Routes */}
             <Route element={<PrivateRoute allowedRoles={[UserRole.CLIENT, UserRole.ADMIN]} />}>
               <Route path="/dashboard" element={<ClientDashboard />} />
               <Route path="/contact" element={<Contact />} />
             </Route>
 
-            {/* Admin Routes */}
+          
             <Route element={<PrivateRoute allowedRoles={[UserRole.ADMIN]} />}>
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/place-order" element={<PlaceOrder />} />

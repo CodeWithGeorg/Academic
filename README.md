@@ -245,15 +245,13 @@ If you find this project helpful and would like to support its development, cons
 
 ---
 
-### Become a Sponsor
+## 🏆 Sponsors
 
-If you're a company or organization and would like to sponsor this project, please reach out! Sponsorship helps fund:
+Become a sponsor and get your logo here, early access to features, and priority support!
 
-- Continued development and maintenance
-- Bug fixes and security updates
-- New feature implementation
-- Documentation improvements
+<a href="https://github.com/sponsors/CodeWithGeorg" target="_blank">
+  <img src="https://img.shields.io/badge/Become-a_Sponsor-FA1E4E?style=for-the-badge&logo=github-sponsors" alt="Sponsor" />
+</a>
 
-**Contact:** sponsors@academicflow.dev
-
+---
 Thank you for your support! 🙌
